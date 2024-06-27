@@ -13,6 +13,8 @@ class MessageBox:
         self.background = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         self.background.fill((0, 0, 0, 150))  # Black with 150/255 transparency
         self.line_height = self.font.get_height()
+        self.vertical_padding = 5  # Padding above and below each line of text
+        self.bottom_padding = 10  # Padding at the bottom of the message box
 
     def add_message(self, message):
         current_time = time.time()
@@ -40,7 +42,7 @@ class MessageBox:
         self.messages = [(msg, timestamp) for msg, timestamp in self.messages if current_time - timestamp <= 5]
 
         # Ensure the message box does not exceed max height
-        while len(self.messages) * self.line_height > self.height:
+        while len(self.messages) * (self.line_height + 2 * self.vertical_padding) > self.height - self.bottom_padding:
             self.messages.pop(0)
 
     def draw(self, surface):
@@ -51,5 +53,6 @@ class MessageBox:
         surface.blit(self.background, (x_position, y_position))
         for i, (message, timestamp) in enumerate(self.messages):
             text_surface = self.font.render(message, True, (255, 255, 255))
-            surface.blit(text_surface, (x_position + 10, y_position + 10 + i * self.line_height))
+            y_offset = y_position + 10 + i * (self.line_height + 2 * self.vertical_padding)
+            surface.blit(text_surface, (x_position + 10, y_offset + self.vertical_padding))
 

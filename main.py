@@ -50,7 +50,7 @@ time_limit = 2 * 60 * 1000  # 2 minutes in milliseconds
 # Instantiate game objects
 game_state_manager = GameStateManager()
 dialogue_manager = DialogueManager(font, wrap_width=200)
-message_box = MessageBox(550, 150, WIDTH, HEIGHT, font)
+message_box = MessageBox(550, 175, WIDTH, HEIGHT, font)
 enemy = Enemy(random.randint(0, MAP_WIDTH), random.randint(0, MAP_HEIGHT), 25, 2.5)
 enemy_home_stand = Stand(1800, 1700, 50, (128, 128, 128))
 player = Player(WIDTH // 2, HEIGHT // 2, 25, 5, (255, 0, 0), MAP_WIDTH, MAP_HEIGHT)
@@ -196,6 +196,9 @@ while running:
     draw_background(screen, camera_offset, background_image)
     camera_offset = (player.position[0] - WIDTH // 2 + player.size // 2, player.position[1] - HEIGHT // 2 + player.size // 2)
 
+    # Temp border
+    draw_border(screen, camera_offset)
+
     # Player
     player_rect = pygame.Rect(player.position[0], player.position[1], player.size, player.size)
     # Enemy
@@ -286,9 +289,6 @@ while running:
         player_cup.draw(screen)
         enemy_cup.draw(screen)
     player_cup.update_position(home_stand.position[0] - 50, home_stand.position[1])
-
-    # Temp border
-    draw_border(screen, camera_offset)
 
     # Cop Logic
     elapsed_time = current_time - start_time

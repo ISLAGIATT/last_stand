@@ -21,8 +21,9 @@ class Enemy:
         self.last_score_update_time = time.time()
 
     def set_target(self, stands):
-        if stands:
-            self.target_stand = random.choice(stands)
+        available_stands = [stand for stand in stands if not stand.controlled_by_player and not stand.controlled_by_enemy]
+        if available_stands:
+            self.target_stand = random.choice(available_stands)
             self.target = self.target_stand.position
 
     def move(self):

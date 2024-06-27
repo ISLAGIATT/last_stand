@@ -17,12 +17,16 @@ def blink_color(color, start_time):
 class Stand:
     next_id = 1  # Class-level attribute to keep track of the next ID to assign
 
-    def __init__(self, x, y, size, color):
+    def __init__(self, x, y, size, color, image_path="images/stand 200px.png"):
         self.id = Stand.next_id
         Stand.next_id += 1
         self.position = [x, y]
         self.size = size
         self.color = color
+        self.image_path = image_path
+        self.image = pygame.image.load(image_path) if image_path else None
+        if self.image:
+            self.image = pygame.transform.scale(self.image, (size, size))
         self.message_box = None
         self.encounter_triggered = False
         self.controlled_by_player = False
@@ -42,7 +46,11 @@ class Stand:
             color = self.color
         stand_rect = pygame.Rect(self.position[0] - camera_offset[0], self.position[1] - camera_offset[1], self.size,
                                  self.size)
-        pygame.draw.rect(surface, color, stand_rect)
+        if self.image:
+            surface.blit(self.image, stand_rect.topleft)
+        else:
+            pygame.draw.rect(surface, color, stand_rect)
+
         return stand_rect
 
     def handle_collision(self, player_rect, camera_offset, player, dialogue_manager, game_state_manager, player_cup,
@@ -279,7 +287,7 @@ class Stand:
         while len(opp_stands) < num_random_stands:
             x, y = random.randint(0, map_width), random.randint(0, map_height)
             if cls.is_valid_position(x, y, opp_stands):
-                opp_stands.append(cls(x, y, 50, (255, 100, 0)))
+                opp_stands.append(cls(x, y, 75, (255, 100, 0))) # change stand image  size here
 
         for _ in range(num_cookie_girls):
             while True:
@@ -298,41 +306,44 @@ class Stand:
 
 
 class CookieGirl(Stand):
-    def __init__(self, x, y):
-        super().__init__(x, y, 50, (255, 0, 255))  # Example color: Magenta
+    def __init__(self, x, y, size=50, image_path="images/cookie_girl_70px.png"):
+        super().__init__(x, y, size, (255, 0, 255))  # Example color: Magenta
         self.controlled_by_enemy = False
         self.controlled_by_player = False
+        self.image = pygame.image.load(image_path).convert_alpha()
+        self.image_size = self.image.get_size()
+        self.shadow = self.create_ovular_shadow(self.image, (0, 0, 0, 100))  # Create an ovular shadow with 100 alpha
 
-    def apply_effect(self, player):
-        if not self.controlled_by_enemy:
-            player.score_rate += 0.05
-            player.has_cookie_girl = True
+    def create_ovular_shadow(self, image, shadow_color):
+        shadow = pygame.Surface(image.get_size(), pygame.SRCALPHA)
+        shadow_rect = pygame.Rect(0, 0, image.get_width(), image.get_height())
+        ellipse_rect = pygame.Rect(0, 0, image.get_width() * 0.6, image.get_height() * 0.3)
+        ellipse_rect.center = (shadow_rect.centerx - 10, shadow_rect.centery + 15)  # Adjust x, y position here
+        pygame.draw.ellipse(shadow, shadow_color, ellipse_rect)
+        return shadow
 
     def draw(self, surface, camera_offset):
+        stand_rect = pygame.Rect(self.position[0] - camera_offset[0], self.position[1] - camera_offset[1],
+                                 self.image_size[0], self.image_size[1])
+
+        # Draw shadow first
+        shadow_offset = (-10, self.image_size[1] * 0.2)  # Adjust shadow position here
+        shadow_pos = (stand_rect.topleft[0] + shadow_offset[0], stand_rect.topleft[1] + shadow_offset[1])
+        surface.blit(self.shadow, shadow_pos)
+
+        # Draw the sprite image
+        surface.blit(self.image, stand_rect.topleft)
+
         if self.controlled_by_enemy:
-            color1 = (255, 0, 255)  # Magenta
-            color2 = (255, 0, 0)  # Red
-            half_width = self.size // 2
-            # Draw the left half in Magenta
-            pygame.draw.rect(surface, color1, (
-                self.position[0] - camera_offset[0], self.position[1] - camera_offset[1], half_width, self.size))
-            # Draw the right half in Red
-            pygame.draw.rect(surface, color2, (
-                self.position[0] - camera_offset[0] + half_width, self.position[1] - camera_offset[1], half_width,
-                self.size))
+            color_overlay = (255, 0, 0, 100)  # Red with transparency
         elif self.controlled_by_player:
-            color1 = (0, 255, 0)  # Green
-            color2 = (255, 0, 255)  # Magenta
-            half_width = self.size // 2
-            # Draw the left half in Green
-            pygame.draw.rect(surface, color1, (
-                self.position[0] - camera_offset[0], self.position[1] - camera_offset[1], half_width, self.size))
-            # Draw the right half in Magenta
-            pygame.draw.rect(surface, color2, (
-                self.position[0] - camera_offset[0] + half_width, self.position[1] - camera_offset[1], half_width,
-                self.size))
+            color_overlay = (0, 255, 0, 100)  # Green with transparency
         else:
-            super().draw(surface, camera_offset)
+            return  # No overlay needed if not controlled
+
+        overlay_surface = pygame.Surface(self.image_size, pygame.SRCALPHA)
+        overlay_surface.fill(color_overlay)
+        surface.blit(overlay_surface, stand_rect.topleft)
 
     def handle_encounter(self, entity, dialogue_manager, game_state_manager, message_box):
         if isinstance(entity, Player) and entity.has_cookie_girl:

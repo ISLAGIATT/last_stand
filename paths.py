@@ -2,15 +2,37 @@ import random
 import pygame
 import math
 
+
 class Path:
-    def __init__(self, start, end):
+    def __init__(self, start, end, image_path="images/dirt_road_20px.png"):
         self.start = start
         self.end = end
+        self.image = pygame.image.load(image_path).convert_alpha()
+        self.image_width = self.image.get_width()
+        self.image_height = self.image.get_height()
 
     def draw(self, surface, camera_offset):
         start_pos = (self.start[0] - camera_offset[0], self.start[1] - camera_offset[1])
         end_pos = (self.end[0] - camera_offset[0], self.end[1] - camera_offset[1])
-        pygame.draw.line(surface, (128, 128, 128), start_pos, end_pos, 5)
+
+        # Calculate the distance and angle between the start and end points
+        distance = math.sqrt((end_pos[0] - start_pos[0]) ** 2 + (end_pos[1] - start_pos[1]) ** 2)
+        angle = math.atan2(end_pos[1] - start_pos[1], end_pos[0] - start_pos[0])
+
+        # Calculate the number of tiles needed to cover the path
+        num_tiles = int(distance / self.image_width)
+
+        # Draw each tile along the path
+        for i in range(num_tiles + 1):
+            tile_x = start_pos[0] + i * self.image_width * math.cos(angle)
+            tile_y = start_pos[1] + i * self.image_width * math.sin(angle)
+
+            # Create a new rect for the image and rotate the image
+            blit_rect = pygame.Rect(tile_x, tile_y, self.image_width, self.image_height)
+            rotated_image = pygame.transform.rotate(self.image, -math.degrees(angle))
+
+            # Blit the image to the surface
+            surface.blit(rotated_image, blit_rect.topleft)
 
     @staticmethod
     def generate_paths(stands):
@@ -34,7 +56,8 @@ class Path:
     def is_player_on_path(player_pos, paths, player_size):
         player_x, player_y = player_pos
         for path in paths:
-            distance = Path.point_to_segment_distance(player_x, player_y, path.start[0], path.start[1], path.end[0], path.end[1])
+            distance = Path.point_to_segment_distance(player_x, player_y, path.start[0], path.start[1], path.end[0],
+                                                      path.end[1])
             if distance <= player_size / 2:
                 return True
         return False
