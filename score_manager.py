@@ -48,6 +48,7 @@ class ScoreManager:
             for stand in opp_stands:
                 if isinstance(stand, HirableBully):
                     stand.bully_steal_check(self.player, message_box)
+                    stand.bully_steal_check(self.enemy, message_box)
 
     def calculate_score_rates(self, opp_stands):
         player_stands_controlled = sum(

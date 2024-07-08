@@ -1,6 +1,7 @@
 import pygame
 import random
 import time
+import sys
 
 from cop import Cop
 from cup import CountdownCup
@@ -13,9 +14,11 @@ from message_box import MessageBox
 from paths import Path
 from player import Player
 from score_manager import ScoreManager
+from screens import TitleScreen, GameOverScreen
 from stand import Stand, CookieGirl, HirableBully
 
 pygame.init()
+pygame.mixer.init()
 
 # Constants
 WIDTH, HEIGHT = 1000, 800
@@ -34,8 +37,15 @@ clock = pygame.time.Clock()
 font = pygame.font.Font(None, 36)
 stands_font = pygame.font.Font(None, 24)
 
+# Title Screen
+title_screen = TitleScreen(screen, font, WIDTH, HEIGHT)
+title_screen.show()  # Display the title screen
+
+# Fade out title screen music
+title_screen.stop_music()
+
 # Load background image and convert
-background_image = pygame.image.load('images/grass_01.png').convert()
+background_image = pygame.image.load('images/grass_v2.png').convert()
 tile_width = background_image.get_width()
 tile_height = background_image.get_height()
 
@@ -45,7 +55,7 @@ fps_font = pygame.font.Font(None, 36)
 
 # Timer variables
 start_time = pygame.time.get_ticks()
-time_limit = 2 * 60 * 1000  # 2 minutes in milliseconds
+time_limit = 1000  # 2 minutes in milliseconds
 
 # Instantiate game objects
 game_state_manager = GameStateManager()
@@ -55,7 +65,7 @@ enemy = Enemy(random.randint(0, MAP_WIDTH), random.randint(0, MAP_HEIGHT), 25, 2
 enemy_home_stand = Stand(1800, 1700, 50, (128, 128, 128))
 player = Player(WIDTH // 2, HEIGHT // 2, 25, 5, (255, 0, 0), MAP_WIDTH, MAP_HEIGHT)
 home_stand = Stand(200, 300, 50, (0, 255, 0))
-score_manager = ScoreManager(player, enemy, font, stands_font)
+score_manager = ScoreManager(player, enemy, font, stands_font, time_limit=time_limit)
 player_cup = CountdownCup(home_stand.position[0] - 50, home_stand.position[1], 30, 100, 10)
 enemy_cup = CountdownCup(WIDTH - 40, 10, 30, 100, 10)
 cop = Cop(MAP_WIDTH, MAP_HEIGHT, size=30, speed=3)
@@ -173,6 +183,10 @@ def check_collision_with_customers(player_rect, customers, camera_offset):
             collision_detected = True
     return collision_detected
 
+
+# Display title screen
+title_screen = TitleScreen(screen, font, WIDTH, HEIGHT)
+title_screen.draw()
 
 running = True
 
@@ -308,6 +322,8 @@ while running:
         if cop.check_collision(player.position, player.size):
             print("Game Over")
             running = False
+            game_over_screen = GameOverScreen(screen, font, score_manager.player_score, score_manager.opponent_score, WIDTH, HEIGHT)
+            game_over_screen.draw()
 
     # Draw dialogue
     dialogue_manager.draw_dialogue(screen, camera_offset, player.position, npc_text_color=(255, 255, 255), npc_visible_duration=2)

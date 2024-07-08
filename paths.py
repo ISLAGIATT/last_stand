@@ -4,7 +4,7 @@ import math
 
 
 class Path:
-    def __init__(self, start, end, image_path="images/dirt_road_20px.png"):
+    def __init__(self, start, end, image_path="images/road_v2.png"):
         self.start = start
         self.end = end
         self.image = pygame.image.load(image_path).convert_alpha()

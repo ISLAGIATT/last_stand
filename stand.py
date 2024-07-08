@@ -246,23 +246,28 @@ class Stand:
                     def update_message_box():
                         message_box.add_message(
                             "You need to sabotage this stand. Return to your home stand to get the foul-smelling lemonade.")
+
                     dialogue_manager.start_dialogue(dialogue_texts, time.time(), self.position, update_message_box,
                                                     source="player")
                 else:
-                    encounter_3_movement_delay = 3.5
-                    self.color = (128, 128, 128)  # Grey for sabotage
-                    game_state_manager.start_sabotage(self)
-                    game_state_manager.sabotage_stand_id = self.id
-                    self.is_sabotage_target = True
-                    game_state_manager.encounter_triggered_by_enemy = True
-                    game_state_manager.enemy_movement_delay = time.time() + encounter_3_movement_delay
-                    dialogue_texts = None
+                    # enabling sabotage for enemy player being saved for later
 
-                    def update_message_box():
-                        message_box.add_message(
-                            "The enemy needs to sabotage a stand. They will return to their home stand to get the foul-smelling lemonade.")
-                    dialogue_manager.start_dialogue(dialogue_texts, time.time(), self.position, update_message_box,
-                                                    source="enemy")
+                    # encounter_3_movement_delay = 3.5
+                    # self.color = (128, 128, 128)  # Grey for sabotage
+                    # game_state_manager.start_sabotage(self)
+                    # game_state_manager.sabotage_stand_id = self.id
+                    # self.is_sabotage_target = True
+                    # game_state_manager.encounter_triggered_by_enemy = True
+                    # game_state_manager.enemy_movement_delay = time.time() + encounter_3_movement_delay
+                    # dialogue_texts = None
+                    #
+                    # def update_message_box():
+                    #     message_box.add_message(
+                    #         "The enemy needs to sabotage a stand. They will return to their home stand to get the foul-smelling lemonade.")
+                    #
+                    # dialogue_manager.start_dialogue(dialogue_texts, time.time(), self.position, update_message_box,
+                    #                                 source="enemy")
+                    pass
 
     def finalize_encounter(self):
         if self.pending_control == "player":
@@ -287,7 +292,7 @@ class Stand:
         while len(opp_stands) < num_random_stands:
             x, y = random.randint(0, map_width), random.randint(0, map_height)
             if cls.is_valid_position(x, y, opp_stands):
-                opp_stands.append(cls(x, y, 75, (255, 100, 0))) # change stand image  size here
+                opp_stands.append(cls(x, y, 75, (255, 100, 0)))  # change stand image  size here
 
         for _ in range(num_cookie_girls):
             while True:
@@ -345,6 +350,11 @@ class CookieGirl(Stand):
         overlay_surface.fill(color_overlay)
         surface.blit(overlay_surface, stand_rect.topleft)
 
+    def apply_effect(self, player):
+        if not self.controlled_by_enemy:
+            player.score_rate += 0.05
+            player.has_cookie_girl = True
+
     def handle_encounter(self, entity, dialogue_manager, game_state_manager, message_box):
         if isinstance(entity, Player) and entity.has_cookie_girl:
             message_box.add_message("You already have a Girl Scout working with you.")
@@ -369,6 +379,7 @@ class CookieGirl(Stand):
 
                 def update_message_box():
                     message_box.add_message("Player hired a Girl Scout")
+
                 dialogue_manager.start_dialogue(dialogue_texts, time.time(), self.position, update_message_box,
                                                 source="player")
             else:
@@ -454,13 +465,13 @@ class HirableBully(Stand):
             dialogue_manager.start_dialogue(dialogue_texts, time.time(), self.position, update_message_box,
                                             source="player" if isinstance(entity, Player) else "enemy")
 
-    def bully_steal_check(self, player, message_box):
-        if player.has_bully:
+    def bully_steal_check(self, entity, message_box):
+        if entity.has_bully:
             if random.randint(1, 100) == 1:  # 1 in 100 chance every frame
-                stolen_amount = player.score * 0.33
-                player.score -= stolen_amount
-                print(f"The bully stole 33% of your score! You lost ${stolen_amount:.2f}.")
-                message_box.add_message(f"The bully stole ${stolen_amount:.2f} from you!")
+                stolen_amount = entity.score * 0.33
+                entity.score -= stolen_amount
+                print(f"The bully stole 33% of {entity}'s score! You lost ${stolen_amount:.2f}.")
+                message_box.add_message(f"The bully stole ${stolen_amount:.2f} from {entity}!")
 
     def handle_opponent_capture(self, stand, dialogue_manager, game_state_manager, message_box):
         dialogue_texts = [

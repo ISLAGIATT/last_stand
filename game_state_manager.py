@@ -17,6 +17,7 @@ class GameStateManager:
         self.sabotage_in_progress = True
         self.sabotage_stand_id = stand.id
 
+
     def complete_sabotage(self, player_cup, enemy_cup):
         self.sabotage_in_progress = False
         self.sabotage_start_time = None
