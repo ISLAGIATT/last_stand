@@ -55,17 +55,17 @@ fps_font = pygame.font.Font(None, 36)
 
 # Timer variables
 start_time = pygame.time.get_ticks()
-time_limit = 1000  # 2 minutes in milliseconds
+time_limit = 2 * 60 * 1000  # 2 minutes in milliseconds
 
 # Instantiate game objects
 game_state_manager = GameStateManager()
 dialogue_manager = DialogueManager(font, wrap_width=200)
 message_box = MessageBox(550, 175, WIDTH, HEIGHT, font)
-enemy = Enemy(random.randint(0, MAP_WIDTH), random.randint(0, MAP_HEIGHT), 25, 2.5)
+enemy = Enemy(random.randint(0, MAP_WIDTH), random.randint(0, MAP_HEIGHT), 25, 4)
 enemy_home_stand = Stand(1800, 1700, 50, (128, 128, 128))
-player = Player(WIDTH // 2, HEIGHT // 2, 25, 5, (255, 0, 0), MAP_WIDTH, MAP_HEIGHT)
-home_stand = Stand(200, 300, 50, (0, 255, 0))
-score_manager = ScoreManager(player, enemy, font, stands_font, time_limit=time_limit)
+player = Player(WIDTH // 2, HEIGHT // 2, 50, 5, (255, 0, 0), MAP_WIDTH, MAP_HEIGHT)
+home_stand = Stand(200, 300, 100, (0, 255, 0), 'images/home_base.png')
+score_manager = ScoreManager(player, enemy, font, stands_font, time_limit)
 player_cup = CountdownCup(home_stand.position[0] - 50, home_stand.position[1], 30, 100, 10)
 enemy_cup = CountdownCup(WIDTH - 40, 10, 30, 100, 10)
 cop = Cop(MAP_WIDTH, MAP_HEIGHT, size=30, speed=3)
@@ -102,7 +102,7 @@ for stand in opp_stand_positions:
     for _ in range(50 // len(opp_stand_positions)):  # Distribute 50 customers among stands
         x = random.randint(stand.position[0] - 200, stand.position[0] + 200)
         y = random.randint(stand.position[1] - 200, stand.position[1] + 200)
-        customers.append(Customer(x, y, 10, 1, stand, opp_stand_positions))
+        customers.append(Customer(x, y, 50, 1, stand, opp_stand_positions))
 
 # Set initial target for enemy
 enemy.set_target(opp_stands + [cg for cg in opp_stands if isinstance(cg, CookieGirl)] + [hb for hb in opp_stands if isinstance(hb, HirableBully)])
@@ -111,6 +111,7 @@ def handle_home_collision():
     global time_at_home_stand, player_in_contact_with_home_stand
     if game_state_manager.sabotage_in_progress:
         if player_rect.colliderect(home_stand_rect):
+            home_stand.set_home_stand_image(True)
             if time_at_home_stand is None:
                 time_at_home_stand = time.time()
                 player_cup.start()
@@ -121,6 +122,7 @@ def handle_home_collision():
                 game_state_manager.got_pee = True
                 player_in_contact_with_home_stand = False
         else:
+            home_stand.set_home_stand_image(False)
             if not player_cup.full:
                 time_at_home_stand = None
                 player_cup.reset()
@@ -223,8 +225,9 @@ while running:
         if game_state_manager.encounter_triggered_by_player:
             game_state_manager.encounter_triggered_by_player = False  # Reset the flag
         player.move(keys)
-    # else:
-    #     print("Player movement disabled due to encounter")
+    else:
+        player.set_idle()
+        player.update_animation()
 
     # Handle enemy movement
     if time.time() > game_state_manager.enemy_movement_delay:
@@ -262,11 +265,18 @@ while running:
     else:
         player.speed = 5
 
+    # Draw customers
+    for customer in customers:
+        customer.move()
+        customer.draw(screen, camera_offset)
+
     # Draw stands
-    home_stand_rect = home_stand.draw(screen, camera_offset)
     enemy_home_stand_rect = enemy_home_stand.draw(screen, camera_offset)
     player_rect = player.draw(screen, camera_offset)
+    home_stand_rect = home_stand.draw(screen, camera_offset)
     for opp_stand in opp_stands:
+        opp_stand.update_running_persons(MAP_WIDTH, MAP_HEIGHT)
+        opp_stand.draw_running_persons(screen, camera_offset)
         opp_stand_rect = opp_stand.draw(screen, camera_offset)
         opp_stand.handle_collision(player_rect, camera_offset, player, dialogue_manager,
                                    game_state_manager, player_cup, enemy_cup, message_box)
@@ -275,13 +285,6 @@ while running:
     for obj in map_objects:
         obj.draw(screen, camera_offset)
 
-    # Draw customers
-    for customer in customers:
-        customer.move()
-        customer.draw(screen, camera_offset)
-        # Draw debug rectangle around customer
-        customer_rect = pygame.Rect(customer.position[0] - camera_offset[0], customer.position[1] - camera_offset[1], customer.size, customer.size)
-        pygame.draw.rect(screen, (255, 0, 0), customer_rect, 1)
 
     # Customer collision detection
     if check_collision_with_customers(player_rect, customers, camera_offset):

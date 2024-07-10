@@ -4,6 +4,7 @@ import pygame
 
 from message_box import MessageBox
 from player import Player
+from running_person import RunningPerson
 
 
 def blink_color(color, start_time):
@@ -17,16 +18,43 @@ def blink_color(color, start_time):
 class Stand:
     next_id = 1  # Class-level attribute to keep track of the next ID to assign
 
-    def __init__(self, x, y, size, color, image_path="images/stand 200px.png"):
+    def __init__(self, x, y, size, color, image_path="images/stand_200px.png"):
         self.id = Stand.next_id
         Stand.next_id += 1
         self.position = [x, y]
         self.size = size
         self.color = color
         self.image_path = image_path
+        self.player_image_path = "images/stand_player.png"
+        self.enemy_image_path = "images/stand_enemy.png"
+        self.contact_image_path = "images/home_base_occupied.png"
+
+        self.image = pygame.image.load(image_path) if image_path else None
+
+        # Load default image
         self.image = pygame.image.load(image_path) if image_path else None
         if self.image:
             self.image = pygame.transform.scale(self.image, (size, size))
+
+        # Load contact image
+        self.contact_image = pygame.image.load(self.contact_image_path) if self.contact_image_path else None
+        if self.contact_image:
+            self.contact_image = pygame.transform.scale(self.contact_image, (size, size))
+
+        # Load player-controlled image
+        self.player_image = pygame.image.load(self.player_image_path) if self.player_image_path else None
+        if self.player_image:
+            self.player_image = pygame.transform.scale(self.player_image, (size, size))
+
+        # Load enemy-controlled image
+        self.enemy_image = pygame.image.load(self.enemy_image_path) if self.enemy_image_path else None
+        if self.enemy_image:
+            self.enemy_image = pygame.transform.scale(self.enemy_image, (size, size))
+
+        # Create shadow surface
+        self.shadow = pygame.Surface((size, size // 2), pygame.SRCALPHA)
+        pygame.draw.ellipse(self.shadow, (0, 0, 0, 100), self.shadow.get_rect())
+
         self.message_box = None
         self.encounter_triggered = False
         self.controlled_by_player = False
@@ -36,20 +64,43 @@ class Stand:
         self.blink_start_time = None
         self.encounter_completed = False  # Flag to indicate if encounter dialogue has completed
         self.is_sabotage_target = False  # Mark if this stand is the target for sabotage
+        self.running_persons = []  # List to store running persons
+
+    def update_running_persons(self, map_width, map_height):
+        self.running_persons = [person for person in self.running_persons if not person.is_off_screen(map_width, map_height)]
+        for person in self.running_persons:
+            person.move()
+
+    def draw_running_persons(self, surface, camera_offset):
+        for person in self.running_persons:
+            person.draw(surface, camera_offset)
+
+    def set_home_stand_image(self, in_contact):
+        if in_contact and self.contact_image:
+            self.image = self.contact_image
+        else:
+            self.image = pygame.image.load(self.image_path)
+            if self.image:
+                self.image = pygame.transform.scale(self.image, (self.size, self.size))
 
     def draw(self, surface, camera_offset):
-        if self.controlled_by_enemy:
-            if self.blink_start_time is None:
-                self.blink_start_time = time.time()
-            color = blink_color((255, 0, 0), self.blink_start_time)
+        stand_rect = pygame.Rect(self.position[0] - camera_offset[0], self.position[1] - camera_offset[1], self.size, self.size)
+
+        # Blit the shadow
+        shadow_offset = (0 + 5, self.size // 1.66)  # Adjust shadow position
+        surface.blit(self.shadow, (stand_rect.topleft[0] + shadow_offset[0], stand_rect.topleft[1] + shadow_offset[1]))
+
+        if self.controlled_by_player:
+            image = self.player_image
+        elif self.controlled_by_enemy:
+            image = self.enemy_image
         else:
-            color = self.color
-        stand_rect = pygame.Rect(self.position[0] - camera_offset[0], self.position[1] - camera_offset[1], self.size,
-                                 self.size)
-        if self.image:
-            surface.blit(self.image, stand_rect.topleft)
+            image = self.image
+
+        if image:
+            surface.blit(image, stand_rect.topleft)
         else:
-            pygame.draw.rect(surface, color, stand_rect)
+            pygame.draw.rect(surface, self.color, stand_rect)
 
         return stand_rect
 
@@ -108,10 +159,13 @@ class Stand:
 
                 def update_message_box():
                     message_box.add_message("Sabotage successful! This stand is now under your control.")
+                    running_person = RunningPerson(self.position[0], self.position[1], 25, 5)
+                    self.running_persons.append(running_person)
 
                 dialogue_texts = ["Drink up, buddy...", "**URP** I gotta go home"]
                 dialogue_manager.start_dialogue(dialogue_texts, time.time(), self.position, update_message_box,
                                                 source="player")
+
             else:
                 self.encounter_triggered = True  # Make it off-limits
                 # Disable player movement for 4 seconds
@@ -126,6 +180,10 @@ class Stand:
                                                 source="player")
 
         game_state_manager.complete_sabotage(player_cup, enemy_cup)
+
+        def update_running_persons(self):
+            for person in self.running_persons:
+                person.move()
 
     def handle_encounter(self, entity, dialogue_manager, game_state_manager, message_box):
         if not self.controlled_by_enemy and not self.controlled_by_player:
@@ -152,8 +210,14 @@ class Stand:
                     self.controlled_by_player = True
                     self.color = (0, 255, 0)  # Change to green
 
+
+
                     def update_message_box():
                         message_box.add_message("You took control of this stand.")
+                        # Add running person animation
+                        running_person = RunningPerson(self.position[0], self.position[1], 25, entity.speed)
+                        self.running_persons.append(running_person)
+
                 else:
                     self.pending_control = "enemy"
                     self.controlled_by_enemy = True
@@ -164,6 +228,8 @@ class Stand:
 
                 dialogue_manager.start_dialogue(dialogue_texts, time.time(), self.position, update_message_box,
                                                 source="player" if isinstance(entity, Player) else "enemy")
+
+
 
             elif encounter_type == 2:
                 encounter_2_success_movement_delay = 5.5
@@ -185,10 +251,14 @@ class Stand:
 
                         def update_message_box():
                             message_box.add_message("You won the fight! This stand is now under your control.")
+                            running_person = RunningPerson(self.position[0], self.position[1], 50,
+                                                           entity.speed)
+                            self.running_persons.append(running_person)
                             if bully_bonus > 0 and base_success_chance < roll <= success_chance:
                                 entity.hirable_bullies -= 1
                                 message_box.add_message("The bully announces he is leaving.")
                                 print("The bully won the fight for you and left.")
+
                     else:
                         self.sabotage_required = True
                         game_state_manager.start_sabotage(self)
@@ -213,6 +283,7 @@ class Stand:
 
                         def update_message_box():
                             message_box.add_message("The enemy won the fight and took control of a stand.")
+
                     else:
                         dialogue_texts = None
                         game_state_manager.encounter_triggered_by_enemy = True

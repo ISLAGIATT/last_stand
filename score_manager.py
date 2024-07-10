@@ -27,7 +27,7 @@ def draw_rounded_rect(surface, rect, color, radius, alpha=150):
 
 
 class ScoreManager:
-    def __init__(self, player, enemy, font, stands_font, time_limit=2 * 60 * 1000):
+    def __init__(self, player, enemy, font, stands_font, time_limit):
         self.player = player
         self.enemy = enemy
         self.font = font
