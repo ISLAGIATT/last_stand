@@ -382,11 +382,21 @@ class Stand:
 
 
 class CookieGirl(Stand):
-    def __init__(self, x, y, size=50, image_path="images/cookie_girl_70px.png"):
+    def __init__(self, x, y, size=75, image_path="images/cookie_girl_70px.png"):
         super().__init__(x, y, size, (255, 0, 255))  # Example color: Magenta
         self.controlled_by_enemy = False
         self.controlled_by_player = False
-        self.image = pygame.image.load(image_path).convert_alpha()
+        self.frame_index = 0
+        self.animation_speed = .05
+        self.frame_timer = 0
+        self.hired = False  # To track if the cookie girl has been hired
+
+        # Load animation frames and scale them to the desired size
+        self.animations = [
+            pygame.transform.scale(pygame.image.load(f'anim/cookie_girl/cookie_girl{i}.png').convert_alpha(),
+                                   (self.size, self.size)) for i in range(1, 5)]
+        self.image = self.animations[0]  # Default frame
+
         self.image_size = self.image.get_size()
         self.shadow = self.create_ovular_shadow(self.image, (0, 0, 0, 100))  # Create an ovular shadow with 100 alpha
 
@@ -398,12 +408,24 @@ class CookieGirl(Stand):
         pygame.draw.ellipse(shadow, shadow_color, ellipse_rect)
         return shadow
 
+    def update_animation(self):
+        self.frame_timer += self.animation_speed
+        if self.frame_timer >= 1:
+            self.frame_timer = 0
+            self.frame_index = (self.frame_index + 1) % len(self.animations)
+            self.image = self.animations[self.frame_index]
+
     def draw(self, surface, camera_offset):
+        if self.hired:
+            return  # Do not draw if the cookie girl is hired
+
+        self.update_animation()
+
         stand_rect = pygame.Rect(self.position[0] - camera_offset[0], self.position[1] - camera_offset[1],
                                  self.image_size[0], self.image_size[1])
 
         # Draw shadow first
-        shadow_offset = (-10, self.image_size[1] * 0.2)  # Adjust shadow position here
+        shadow_offset = (30, self.image_size[1] * 0.3)  # Adjust shadow position here
         shadow_pos = (stand_rect.topleft[0] + shadow_offset[0], stand_rect.topleft[1] + shadow_offset[1])
         surface.blit(self.shadow, shadow_pos)
 
@@ -450,6 +472,7 @@ class CookieGirl(Stand):
 
                 def update_message_box():
                     message_box.add_message("Player hired a Girl Scout")
+                    self.hired = True
 
                 dialogue_manager.start_dialogue(dialogue_texts, time.time(), self.position, update_message_box,
                                                 source="player")
@@ -463,9 +486,15 @@ class CookieGirl(Stand):
 
 class HirableBully(Stand):
     def __init__(self, x, y):
-        super().__init__(x, y, 50, (0, 0, 255))  # Example color: Blue
+        super().__init__(x, y, 75, (0, 0, 255))  # Example color: Blue
         self.controlled_by_enemy = False
         self.controlled_by_player = False
+        self.frame_index = 0
+        self.animation_speed = 0.10
+        self.frame_timer = 0
+        self.hired = False
+        self.animations = [pygame.transform.scale(pygame.image.load(f'anim/bully/bully{i}.png').convert_alpha(), (self.size, self.size)) for i in range(1, 6)]
+        self.image = self.animations[0]  # Default frame
 
     def apply_effect(self, player, game_state_manager):
         if not self.controlled_by_enemy:
@@ -474,31 +503,26 @@ class HirableBully(Stand):
             print(
                 f"Bully added. Opponent score rate decreased by 0.05. Current opponent score rate: {game_state_manager.opponent_score_rate}")
 
+    def update_animation(self):
+        self.frame_timer += self.animation_speed
+        if self.frame_timer >= 1:
+            self.frame_timer = 0
+            self.frame_index = (self.frame_index + 1) % len(self.animations)
+            self.image = self.animations[self.frame_index]
+
     def draw(self, surface, camera_offset):
-        if self.controlled_by_enemy:
-            color1 = (0, 0, 255)  # Blue
-            color2 = (255, 0, 0)  # Red
-            half_width = self.size // 2
-            # Draw the left half in Blue
-            pygame.draw.rect(surface, color1, (
-                self.position[0] - camera_offset[0], self.position[1] - camera_offset[1], half_width, self.size))
-            # Draw the right half in Red
-            pygame.draw.rect(surface, color2, (
-                self.position[0] - camera_offset[0] + half_width, self.position[1] - camera_offset[1], half_width,
-                self.size))
-        elif self.controlled_by_player:
-            color1 = (0, 0, 255)  # Blue
-            color2 = (0, 255, 0)  # Green
-            half_width = self.size // 2
-            # Draw the left half in Blue
-            pygame.draw.rect(surface, color1, (
-                self.position[0] - camera_offset[0], self.position[1] - camera_offset[1], half_width, self.size))
-            # Draw the right half in Green
-            pygame.draw.rect(surface, color2, (
-                self.position[0] - camera_offset[0] + half_width, self.position[1] - camera_offset[1], half_width,
-                self.size))
-        else:
-            super().draw(surface, camera_offset)
+        if self.hired:
+            return  # Do not draw if the bully is hired
+
+        self.update_animation()
+
+        # Blit the shadow
+        stand_rect = pygame.Rect(self.position[0] - camera_offset[0], self.position[1] - camera_offset[1], self.size, self.size)
+        shadow_offset = (0 + 5, self.size // 1.66)  # Adjust shadow position
+        surface.blit(self.shadow, (stand_rect.topleft[0] + shadow_offset[0], stand_rect.topleft[1] + shadow_offset[1]))
+
+        # Blit the animation frame
+        surface.blit(self.image, stand_rect.topleft)
 
     def handle_encounter(self, entity, dialogue_manager, game_state_manager, message_box):
         if isinstance(entity, Player) and entity.has_bully:
@@ -520,10 +544,11 @@ class HirableBully(Stand):
                 self.color = (0, 255, 0)  # Change to green
                 self.apply_effect(entity, game_state_manager)
                 entity.has_bully = True  # Set the flag indicating the player has a bully
-                message_box.add_message("Player hired a bully")
+                # message_box.add_message("Player hired a bully")
 
                 def update_message_box():
                     message_box.add_message("Player hired a bully")
+                    self.hired = True
             else:
                 self.pending_control = "enemy"
                 self.controlled_by_enemy = True
@@ -543,12 +568,3 @@ class HirableBully(Stand):
                 entity.score -= stolen_amount
                 print(f"The bully stole 33% of {entity}'s score! You lost ${stolen_amount:.2f}.")
                 message_box.add_message(f"The bully stole ${stolen_amount:.2f} from {entity}!")
-
-    def handle_opponent_capture(self, stand, dialogue_manager, game_state_manager, message_box):
-        dialogue_texts = [
-            "A bully is capturing this stand for you!",
-        ]
-        dialogue_manager.start_dialogue(dialogue_texts, time.time(), stand.position,
-                                        lambda: message_box.add_message("A bully is capturing this stand for you!"),
-                                        source="enemy")
-        stand.handle_encounter(self, dialogue_manager, game_state_manager, message_box)
