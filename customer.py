@@ -24,6 +24,14 @@ class Customer:
         }
         self.image = self.animations['down'][0]  # Default frame
 
+        # Create shadow surface
+        self.shadow = self.create_ovular_shadow((0, 0, 0, 100))  # 100 alpha for transparency
+
+    def create_ovular_shadow(self, shadow_color):
+        shadow = pygame.Surface((self.size * .75, self.size * .33), pygame.SRCALPHA)
+        pygame.draw.ellipse(shadow, shadow_color, shadow.get_rect())
+        return shadow
+
     def load_image(self, path):
         image = pygame.image.load(path).convert_alpha()
         return pygame.transform.scale(image, (self.size, self.size))
@@ -67,4 +75,10 @@ class Customer:
     def draw(self, surface, camera_offset):
         self.update_animation()
         rect = pygame.Rect(self.position[0] - camera_offset[0], self.position[1] - camera_offset[1], self.size, self.size)
+
+        # Draw shadow
+        shadow_offset = (8, self.size // 1.5)  # Adjust shadow position
+        surface.blit(self.shadow, (rect.topleft[0] + shadow_offset[0], rect.topleft[1] + shadow_offset[1]))
+
+        # Draw sprite
         surface.blit(self.image, rect.topleft)

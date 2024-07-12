@@ -1,7 +1,6 @@
 import pygame
 import random
 import time
-import sys
 
 from cop import Cop
 from cup import CountdownCup
@@ -55,7 +54,7 @@ fps_font = pygame.font.Font(None, 36)
 
 # Timer variables
 start_time = pygame.time.get_ticks()
-time_limit = 2 * 60 * 1000  # 2 minutes in milliseconds
+time_limit = .25 * 60 * 1000  # 2 minutes in milliseconds
 
 # Instantiate game objects
 game_state_manager = GameStateManager()
@@ -68,7 +67,7 @@ home_stand = Stand(200, 300, 100, (0, 255, 0), 'images/home_base.png')
 score_manager = ScoreManager(player, enemy, font, stands_font, time_limit)
 player_cup = CountdownCup(home_stand.position[0] - 50, home_stand.position[1], 30, 100, 10)
 enemy_cup = CountdownCup(WIDTH - 40, 10, 30, 100, 10)
-cop = Cop(MAP_WIDTH, MAP_HEIGHT, size=30, speed=3)
+cop = Cop(MAP_WIDTH, MAP_HEIGHT, size=60, speed=3)
 
 # Generate stands
 opp_stands = Stand.generate_random_stands(8, 3, 3, MAP_WIDTH, MAP_HEIGHT)
@@ -265,6 +264,8 @@ while running:
     else:
         player.speed = 5
 
+    player_rect = player.draw(screen, camera_offset)
+
     # Draw customers
     for customer in customers:
         customer.move()
@@ -272,7 +273,6 @@ while running:
 
     # Draw stands
     enemy_home_stand_rect = enemy_home_stand.draw(screen, camera_offset)
-    player_rect = player.draw(screen, camera_offset)
     home_stand_rect = home_stand.draw(screen, camera_offset)
     for opp_stand in opp_stands:
         opp_stand.update_running_persons(MAP_WIDTH, MAP_HEIGHT)
@@ -285,15 +285,11 @@ while running:
     for obj in map_objects:
         obj.draw(screen, camera_offset)
 
-
     # Customer collision detection
     if check_collision_with_customers(player_rect, customers, camera_offset):
         player.speed = player.speed / 2  # Reduce speed by half if colliding with a customer
     else:
         player.speed = player.speed  # Restore original speed
-
-    # Draw stats
-    score_manager.draw_scores(screen, WIDTH, HEIGHT, opp_stands)
 
     # Collision handling
     handle_home_collision()
@@ -330,6 +326,9 @@ while running:
 
     # Draw dialogue
     dialogue_manager.draw_dialogue(screen, camera_offset, player.position, npc_text_color=(255, 255, 255), npc_visible_duration=2)
+
+    # Draw stats
+    score_manager.draw_scores(screen, WIDTH, HEIGHT, opp_stands)
 
     # Message box on top
     message_box.draw(screen)

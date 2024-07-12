@@ -479,7 +479,8 @@ class CookieGirl(Stand):
             else:
                 self.pending_control = "enemy"
                 self.controlled_by_enemy = True
-                self.color = (255, 0, 0)  # Change to red
+                # self.color = (255, 0, 0)  # Change to red
+                self.hired = True
                 entity.has_cookie_girl = True  # Set the flag indicating the enemy has a cookie girl
                 message_box.add_message("The enemy hired a Girl Scout")
 
@@ -552,8 +553,9 @@ class HirableBully(Stand):
             else:
                 self.pending_control = "enemy"
                 self.controlled_by_enemy = True
-                self.color = (255, 0, 0)  # Change to red
+                # self.color = (255, 0, 0)  # Change to red
                 entity.has_bully = True
+                self.hired = True
 
                 def update_message_box():
                     message_box.add_message("The enemy hired a bully")
