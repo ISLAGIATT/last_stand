@@ -21,7 +21,7 @@ pygame.mixer.init()
 
 # Constants
 WIDTH, HEIGHT = 1000, 800
-MAP_WIDTH, MAP_HEIGHT = 2000, 2000
+MAP_WIDTH, MAP_HEIGHT = 2500, 2500
 FPS = 60
 
 # Colors
@@ -54,23 +54,23 @@ fps_font = pygame.font.Font(None, 36)
 
 # Timer variables
 start_time = pygame.time.get_ticks()
-time_limit = .25 * 60 * 1000  # 2 minutes in milliseconds
+time_limit = 2 * 60 * 1000  # 2 minutes in milliseconds
 
 # Instantiate game objects
 game_state_manager = GameStateManager()
 dialogue_manager = DialogueManager(font, wrap_width=200)
 message_box = MessageBox(550, 175, WIDTH, HEIGHT, font)
 enemy = Enemy(random.randint(0, MAP_WIDTH), random.randint(0, MAP_HEIGHT), 25, 4)
-enemy_home_stand = Stand(1800, 1700, 50, (128, 128, 128))
 player = Player(WIDTH // 2, HEIGHT // 2, 50, 5, (255, 0, 0), MAP_WIDTH, MAP_HEIGHT)
 home_stand = Stand(200, 300, 100, (0, 255, 0), 'images/home_base.png')
+second_home_stand = Stand(2000, 1500, 100, (0, 255, 0), 'images/home_base.png')
 score_manager = ScoreManager(player, enemy, font, stands_font, time_limit)
 player_cup = CountdownCup(home_stand.position[0] - 50, home_stand.position[1], 30, 100, 10)
-enemy_cup = CountdownCup(WIDTH - 40, 10, 30, 100, 10)
+second_player_cup = CountdownCup(second_home_stand.position[0] - 50, second_home_stand.position[1], 30, 100, 10)
 cop = Cop(MAP_WIDTH, MAP_HEIGHT, size=60, speed=3)
 
 # Generate stands
-opp_stands = Stand.generate_random_stands(8, 3, 3, MAP_WIDTH, MAP_HEIGHT)
+opp_stands = Stand.generate_random_stands(14, 2, 2, MAP_WIDTH, MAP_HEIGHT)
 
 # Filter stands for path generation
 opp_stand_positions = [stand for stand in opp_stands if not isinstance(stand, (CookieGirl, HirableBully))]
@@ -90,7 +90,7 @@ home_encounter_triggered = False
 time_at_home_stand = None
 player_in_contact_with_home_stand = False
 time_at_enemy_home_stand = None
-enemy_in_contact_with_home_stand = False
+# enemy_in_contact_with_home_stand = False
 
 # Generate paths
 paths = Path.generate_paths(opp_stand_positions)
@@ -111,6 +111,7 @@ def handle_home_collision():
     if game_state_manager.sabotage_in_progress:
         if player_rect.colliderect(home_stand_rect):
             home_stand.set_home_stand_image(True)
+            player_in_contact_with_home_stand = True
             if time_at_home_stand is None:
                 time_at_home_stand = time.time()
                 player_cup.start()
@@ -120,31 +121,29 @@ def handle_home_collision():
                 time_at_home_stand = None
                 game_state_manager.got_pee = True
                 player_in_contact_with_home_stand = False
+        elif player_rect.colliderect(second_home_stand_rect):  # Check collision with second home stand
+            second_home_stand.set_home_stand_image(True)
+            if time_at_home_stand is None:
+                time_at_home_stand = time.time()
+                second_player_cup.start()
+            elapsed_time = time.time() - time_at_home_stand
+            if elapsed_time >= 10:
+                message_box.add_message("You've got the foul-smelling lemonade. Go sabotage the enemy stand!")
+                time_at_home_stand = None
+                game_state_manager.got_pee = True
+                player_in_contact_with_home_stand = False
         else:
             home_stand.set_home_stand_image(False)
+            second_home_stand.set_home_stand_image(False)  # Reset image for second home stand
             if not player_cup.full:
                 time_at_home_stand = None
                 player_cup.reset()
                 player_in_contact_with_home_stand = False
+            if not second_player_cup.full:
+                time_at_home_stand = None
+                second_player_cup.reset()
+                player_in_contact_with_home_stand = False
 
-def handle_enemy_home_collision():
-    global time_at_enemy_home_stand, enemy_in_contact_with_home_stand
-    if game_state_manager.sabotage_in_progress:
-        if enemy_rect.colliderect(enemy_home_stand_rect):
-            if time_at_enemy_home_stand is None:
-                time_at_enemy_home_stand = time.time()
-                enemy_cup.start()
-            elapsed_time = time.time() - time_at_enemy_home_stand
-            if elapsed_time >= 10:
-                message_box.add_message("The enemy got the foul-smelling lemonade. They will sabotage the player stand!")
-                time_at_enemy_home_stand = None
-                game_state_manager.enemy_got_pee = True
-                enemy_in_contact_with_home_stand = False
-        else:
-            if not enemy_cup.full:
-                time_at_enemy_home_stand = None
-                enemy_cup.reset()
-                enemy_in_contact_with_home_stand = False
 
 
 def get_click_coordinates():
@@ -233,8 +232,7 @@ while running:
         if game_state_manager.encounter_triggered_by_enemy:
             game_state_manager.encounter_triggered_by_enemy = False  # Reset the flag
         enemy.move()
-    # else:
-    #     print("Enemy movement disabled due to encounter")
+
 
     # Enemy pathfinding
     if not enemy.target:
@@ -272,14 +270,14 @@ while running:
         customer.draw(screen, camera_offset)
 
     # Draw stands
-    enemy_home_stand_rect = enemy_home_stand.draw(screen, camera_offset)
     home_stand_rect = home_stand.draw(screen, camera_offset)
+    second_home_stand_rect = second_home_stand.draw(screen, camera_offset)
     for opp_stand in opp_stands:
         opp_stand.update_running_persons(MAP_WIDTH, MAP_HEIGHT)
         opp_stand.draw_running_persons(screen, camera_offset)
         opp_stand_rect = opp_stand.draw(screen, camera_offset)
         opp_stand.handle_collision(player_rect, camera_offset, player, dialogue_manager,
-                                   game_state_manager, player_cup, enemy_cup, message_box)
+                                   game_state_manager, player_cup, message_box)
 
     # Draw obstacles (rocks)
     for obj in map_objects:
@@ -291,16 +289,14 @@ while running:
     else:
         player.speed = player.speed  # Restore original speed
 
-    # Collision handling
+    # Home Stand Collision handling
     handle_home_collision()
-    handle_enemy_home_collision()
 
     # Pee logic
     if not game_state_manager.sabotage_in_progress and game_state_manager.got_pee:
-        game_state_manager.complete_sabotage(player_cup, enemy_cup)
-    if game_state_manager.sabotage_in_progress or player_cup.full or enemy_cup.full:
+        game_state_manager.complete_sabotage(player_cup)
+    if game_state_manager.sabotage_in_progress or player_cup.full:
         player_cup.draw(screen)
-        enemy_cup.draw(screen)
     player_cup.update_position(home_stand.position[0] - 50, home_stand.position[1])
 
     # Cop Logic

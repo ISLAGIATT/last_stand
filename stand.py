@@ -28,6 +28,7 @@ class Stand:
         self.player_image_path = "images/stand_player.png"
         self.enemy_image_path = "images/stand_enemy.png"
         self.contact_image_path = "images/home_base_occupied.png"
+        self.inactive_image_path = 'images/stand_inactive.gif'
 
         self.image = pygame.image.load(image_path) if image_path else None
 
@@ -51,14 +52,20 @@ class Stand:
         if self.enemy_image:
             self.enemy_image = pygame.transform.scale(self.enemy_image, (size, size))
 
+        # Load inactive image
+        self.inactive_image = pygame.image.load(self.inactive_image_path) if self.inactive_image_path else None
+        if self.inactive_image:
+            self.inactive_image = pygame.transform.scale(self.inactive_image, (size, size))
+
         # Create shadow surface
         self.shadow = pygame.Surface((size, size // 2), pygame.SRCALPHA)
         pygame.draw.ellipse(self.shadow, (0, 0, 0, 100), self.shadow.get_rect())
 
         self.message_box = None
         self.encounter_triggered = False
-        self.controlled_by_player = False
-        self.controlled_by_enemy = False
+        self.controlled_by_player = False # for draw method
+        self.controlled_by_enemy = False # for draw method
+        self.inactive = False # for failed sabotage draw method
         self.encounter_type = None
         self.sabotage_required = False
         self.blink_start_time = None
@@ -90,7 +97,9 @@ class Stand:
         shadow_offset = (0 + 5, self.size // 1.66)  # Adjust shadow position
         surface.blit(self.shadow, (stand_rect.topleft[0] + shadow_offset[0], stand_rect.topleft[1] + shadow_offset[1]))
 
-        if self.controlled_by_player:
+        if self.inactive:
+            image = self.inactive_image
+        elif self.controlled_by_player:
             image = self.player_image
         elif self.controlled_by_enemy:
             image = self.enemy_image
@@ -104,13 +113,12 @@ class Stand:
 
         return stand_rect
 
-    def handle_collision(self, player_rect, camera_offset, player, dialogue_manager, game_state_manager, player_cup,
-                         enemy_cup, message_box):
+    def handle_collision(self, player_rect, camera_offset, player, dialogue_manager, game_state_manager, player_cup, message_box):
         stand_rect = pygame.Rect(self.position[0] - camera_offset[0], self.position[1] - camera_offset[1], self.size,
                                  self.size)
         if player_rect.colliderect(stand_rect):
             if game_state_manager.got_pee and game_state_manager.sabotage_in_progress and game_state_manager.sabotage_stand_id == self.id:
-                self.complete_sabotage(player, dialogue_manager, game_state_manager, player_cup, enemy_cup, message_box)
+                self.complete_sabotage(player, dialogue_manager, game_state_manager, player_cup, message_box)
             elif not self.encounter_triggered and not game_state_manager.sabotage_in_progress:
                 self.handle_encounter(player, dialogue_manager, game_state_manager, message_box)
                 self.encounter_triggered = True
@@ -126,7 +134,7 @@ class Stand:
         else:
             self.enemy_in_contact = False
 
-    def complete_sabotage(self, player, dialogue_manager, game_state_manager, player_cup, enemy_cup, message_box):
+    def complete_sabotage(self, player, dialogue_manager, game_state_manager, player_cup, message_box):
         cookie_girl_penalty = 30 if player.has_cookie_girl else 0
         roll = random.randint(1, 100)
         sabotage_failed = roll <= cookie_girl_penalty
@@ -135,6 +143,7 @@ class Stand:
         if sabotage_failed:
             print(f"{roll} out of 100")
             self.encounter_triggered = True  # Make it off-limits
+            self.inactive = True
             dialogue_texts = ["Drink up!", "Oh that's disgusting. I'm telling!"]
 
             def update_message_box():
@@ -174,12 +183,13 @@ class Stand:
 
                 def update_message_box():
                     message_box.add_message("Sabotage failed! This stand is now off-limits to you.")
+                    self.inactive = True
 
                 dialogue_texts = ["Drink up, buddy...", "No way am I drinking that."]
                 dialogue_manager.start_dialogue(dialogue_texts, time.time(), self.position, update_message_box,
                                                 source="player")
 
-        game_state_manager.complete_sabotage(player_cup, enemy_cup)
+        game_state_manager.complete_sabotage(player_cup)
 
         def update_running_persons(self):
             for person in self.running_persons:
@@ -207,16 +217,14 @@ class Stand:
                 ]
                 if isinstance(entity, Player):
                     self.pending_control = "player"
-                    self.controlled_by_player = True
                     self.color = (0, 255, 0)  # Change to green
-
-
 
                     def update_message_box():
                         message_box.add_message("You took control of this stand.")
                         # Add running person animation
                         running_person = RunningPerson(self.position[0], self.position[1], 25, entity.speed)
                         self.running_persons.append(running_person)
+                        self.controlled_by_player = True
 
                 else:
                     self.pending_control = "enemy"
@@ -432,15 +440,7 @@ class CookieGirl(Stand):
         # Draw the sprite image
         surface.blit(self.image, stand_rect.topleft)
 
-        if self.controlled_by_enemy:
-            color_overlay = (255, 0, 0, 100)  # Red with transparency
-        elif self.controlled_by_player:
-            color_overlay = (0, 255, 0, 100)  # Green with transparency
-        else:
-            return  # No overlay needed if not controlled
-
         overlay_surface = pygame.Surface(self.image_size, pygame.SRCALPHA)
-        overlay_surface.fill(color_overlay)
         surface.blit(overlay_surface, stand_rect.topleft)
 
     def apply_effect(self, player):
@@ -461,7 +461,6 @@ class CookieGirl(Stand):
             if isinstance(entity, Player):
                 self.pending_control = "player"
                 self.controlled_by_player = True
-                self.color = (0, 255, 0)  # Change to green
                 self.apply_effect(entity)
                 entity.has_cookie_girl = True  # Set the flag indicating the player has a cookie girl
 
@@ -479,7 +478,6 @@ class CookieGirl(Stand):
             else:
                 self.pending_control = "enemy"
                 self.controlled_by_enemy = True
-                # self.color = (255, 0, 0)  # Change to red
                 self.hired = True
                 entity.has_cookie_girl = True  # Set the flag indicating the enemy has a cookie girl
                 message_box.add_message("The enemy hired a Girl Scout")

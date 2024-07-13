@@ -17,14 +17,12 @@ class GameStateManager:
         self.sabotage_in_progress = True
         self.sabotage_stand_id = stand.id
 
-
-    def complete_sabotage(self, player_cup, enemy_cup):
+    def complete_sabotage(self, player_cup):
         self.sabotage_in_progress = False
         self.sabotage_start_time = None
         self.got_pee = False
         self.sabotage_stand_id = None
         player_cup.reset()
-        enemy_cup.reset()
 
     def update_sabotage_start_time(self, time):
         self.sabotage_start_time = time
