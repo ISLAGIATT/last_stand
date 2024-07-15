@@ -54,7 +54,7 @@ fps_font = pygame.font.Font(None, 36)
 
 # Timer variables
 start_time = pygame.time.get_ticks()
-time_limit = 2 * 60 * 1000  # 2 minutes in milliseconds
+time_limit = 1.5 * 60 * 1000  # 2 minutes in milliseconds
 
 # Instantiate game objects
 game_state_manager = GameStateManager()
@@ -64,9 +64,8 @@ enemy = Enemy(random.randint(0, MAP_WIDTH), random.randint(0, MAP_HEIGHT), 25, 4
 player = Player(WIDTH // 2, HEIGHT // 2, 50, 5, (255, 0, 0), MAP_WIDTH, MAP_HEIGHT)
 home_stand = Stand(200, 300, 100, (0, 255, 0), 'images/home_base.png')
 second_home_stand = Stand(2000, 1500, 100, (0, 255, 0), 'images/home_base.png')
-score_manager = ScoreManager(player, enemy, font, stands_font, time_limit)
 player_cup = CountdownCup(home_stand.position[0] - 50, home_stand.position[1], 30, 100, 10)
-second_player_cup = CountdownCup(second_home_stand.position[0] - 50, second_home_stand.position[1], 30, 100, 10)
+score_manager = ScoreManager(player, enemy, font, stands_font, time_limit, player_cup)
 cop = Cop(MAP_WIDTH, MAP_HEIGHT, size=60, speed=3)
 
 # Generate stands
@@ -123,9 +122,10 @@ def handle_home_collision():
                 player_in_contact_with_home_stand = False
         elif player_rect.colliderect(second_home_stand_rect):  # Check collision with second home stand
             second_home_stand.set_home_stand_image(True)
+            player_in_contact_with_home_stand = True
             if time_at_home_stand is None:
                 time_at_home_stand = time.time()
-                second_player_cup.start()
+                player_cup.start()
             elapsed_time = time.time() - time_at_home_stand
             if elapsed_time >= 10:
                 message_box.add_message("You've got the foul-smelling lemonade. Go sabotage the enemy stand!")
@@ -139,11 +139,6 @@ def handle_home_collision():
                 time_at_home_stand = None
                 player_cup.reset()
                 player_in_contact_with_home_stand = False
-            if not second_player_cup.full:
-                time_at_home_stand = None
-                second_player_cup.reset()
-                player_in_contact_with_home_stand = False
-
 
 
 def get_click_coordinates():
@@ -305,7 +300,7 @@ while running:
     if remaining_time == 0 and not cop.active:
         cop.activate()
         last_speed_increase_time = current_time
-        message_box.add_message("Time's up, here come the cops!")
+        message_box.add_message("Time's up, here come the cops!", blink=True)
         print("Cop activated")
     if cop.active and current_time - last_speed_increase_time >= 10 * 1000:
         cop.speed += 1

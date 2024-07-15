@@ -151,7 +151,7 @@ class Stand:
                     message_box.add_message("Girl scout has left.")
                     player.has_cookie_girl = False
                     print("Failure due to the cookie girl penalty.")
-                message_box.add_message("Sabotage failed! This stand is now off-limits to you.")
+                message_box.add_message("Sabotage failed! Girl Scout ratted you out!")
 
             dialogue_manager.start_dialogue(dialogue_texts, time.time(), self.position, update_message_box,
                                             source="player")
@@ -160,8 +160,6 @@ class Stand:
             sabotage_result = random.randint(1, 100) < success_chance
 
             if sabotage_result:
-                self.controlled_by_player = True
-                self.color = (0, 200, 0)  # Change to green
                 # Disable player movement for 4 seconds
                 game_state_manager.encounter_triggered_by_player = True
                 game_state_manager.player_movement_delay = time.time() + sabotage_movement_delay
@@ -169,6 +167,8 @@ class Stand:
                 def update_message_box():
                     message_box.add_message("Sabotage successful! This stand is now under your control.")
                     running_person = RunningPerson(self.position[0], self.position[1], 25, 5)
+                    self.controlled_by_player = True
+                    self.color = (0, 200, 0)  # Change to green
                     self.running_persons.append(running_person)
 
                 dialogue_texts = ["Drink up, buddy...", "**URP** I gotta go home"]
@@ -255,7 +255,6 @@ class Stand:
                         game_state_manager.player_movement_delay = time.time() + encounter_2_success_movement_delay
                         dialogue_texts = ["Don't make me come back there.", "You don't have the guts.", "**SMACK**"]
                         self.pending_control = "player"
-                        self.controlled_by_player = True
 
                         def update_message_box():
                             message_box.add_message("You won the fight! This stand is now under your control.")
@@ -266,6 +265,7 @@ class Stand:
                                 entity.hirable_bullies -= 1
                                 message_box.add_message("The bully announces he is leaving.")
                                 print("The bully won the fight for you and left.")
+                            self.controlled_by_player = True
 
                     else:
                         self.sabotage_required = True
@@ -324,7 +324,7 @@ class Stand:
 
                     def update_message_box():
                         message_box.add_message(
-                            "You need to sabotage this stand. Return to your home stand to get the foul-smelling lemonade.")
+                            "You need to sabotage this stand. Go to a quiet place to get the foul-smelling lemonade.")
 
                     dialogue_manager.start_dialogue(dialogue_texts, time.time(), self.position, update_message_box,
                                                     source="player")

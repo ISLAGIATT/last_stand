@@ -1,6 +1,7 @@
 import pygame
 import pygame.gfxdraw
 import time
+
 from stand import HirableBully, CookieGirl
 
 def draw_rounded_rect(surface, rect, color, radius, alpha=150):
@@ -27,7 +28,8 @@ def draw_rounded_rect(surface, rect, color, radius, alpha=150):
 
 
 class ScoreManager:
-    def __init__(self, player, enemy, font, stands_font, time_limit):
+    def __init__(self, player, enemy, font, stands_font, time_limit, cup):
+        self.cup = cup
         self.player = player
         self.enemy = enemy
         self.font = font
@@ -71,24 +73,32 @@ class ScoreManager:
 
     def draw_scores(self, screen, width, height, opp_stands):
         player_stands_controlled = sum(
-            1 for stand in opp_stands if stand.controlled_by_player and not isinstance(stand, (CookieGirl, HirableBully)))
+            1 for stand in opp_stands if
+            stand.controlled_by_player and not isinstance(stand, (CookieGirl, HirableBully)))
         enemy_stands_controlled = sum(
-            1 for stand in opp_stands if stand.controlled_by_enemy and not isinstance(stand, (CookieGirl, HirableBully)))
+            1 for stand in opp_stands if
+            stand.controlled_by_enemy and not isinstance(stand, (CookieGirl, HirableBully)))
 
         player_score_text = self.font.render(f'Player: ${self.player_score:.2f}', True, (255, 255, 255))
-        player_stands_text = self.stands_font.render(f'Stands Controlled: {player_stands_controlled}', True, (255, 255, 255))
+        player_stands_text = self.stands_font.render(f'Stands Controlled: {player_stands_controlled}', True,
+                                                     (255, 255, 255))
         player_score_rate_text = self.font.render(f'Score Rate: {self.player.score_rate:.2f}', True, (255, 255, 255))
 
         opponent_score_text = self.font.render(f'Opponent: ${self.opponent_score:.2f}', True, (255, 255, 255))
-        enemy_stands_text = self.stands_font.render(f'Stands Controlled: {enemy_stands_controlled}', True, (255, 255, 255))
+        enemy_stands_text = self.stands_font.render(f'Stands Controlled: {enemy_stands_controlled}', True,
+                                                    (255, 255, 255))
         enemy_score_rate_text = self.font.render(f'Score Rate: {self.enemy.score_rate:.2f}', True, (255, 255, 255))
 
         alpha = 150  # Define the transparency level
 
         # Background for player score
-        draw_rounded_rect(screen, pygame.Rect(5, 5, player_score_text.get_width() + 50, player_score_text.get_height() + 100), (0, 0, 0), 10, alpha)
+        player_rect = pygame.Rect(5, 5, player_score_text.get_width() + 100,
+                                  player_score_text.get_height() + 100)  # Increase width to accommodate the cup
+        draw_rounded_rect(screen, player_rect, (0, 0, 0), 10, alpha)
         # Background for enemy score
-        draw_rounded_rect(screen, pygame.Rect(width - opponent_score_text.get_width() - 15, 5, opponent_score_text.get_width() + 10, opponent_score_text.get_height() + 100), (0, 0, 0), 10, alpha)
+        draw_rounded_rect(screen, pygame.Rect(width - opponent_score_text.get_width() - 15, 5,
+                                              opponent_score_text.get_width() + 10,
+                                              opponent_score_text.get_height() + 100), (0, 0, 0), 10, alpha)
         # Background for timer
         draw_rounded_rect(screen, pygame.Rect(width // 2 - 62, 5, 125, 35), (0, 0, 0), 10, alpha)
 
@@ -116,6 +126,16 @@ class ScoreManager:
         remaining_time = max(0, self.time_limit - elapsed_time)
         timer_text = self.font.render(f'Time: {remaining_time // 1000}', True, (255, 255, 255))
         screen.blit(timer_text, (width // 2 - timer_text.get_width() // 2, 10))
+
+        # Draw the cup with right justification in the player score overlay
+        cup_x_offset = player_rect.right - 40  # Adjust position as necessary
+        self.cup.update_position(cup_x_offset, 10)
+        self.cup.draw(screen)
+
+    def reset(self):
+        self.player_score = 0.0
+        self.opponent_score = 0.0
+        self.start_time = pygame.time.get_ticks()
 
     def reset(self):
         self.player_score = 0.0

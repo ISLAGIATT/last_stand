@@ -9,12 +9,14 @@ class TitleScreen:
         self.width = width
         self.height = height
         self.padding = 10
+        self.title_font = pygame.font.SysFont("Courier", 42, bold=True)
+        self.subtitle_font = pygame.font.SysFont("Courier", 36)
         self.title_image = pygame.image.load('images/title.png').convert_alpha()  # Path to your title image
         title_image_width = width - 2 * self.padding
         title_image_height = (height * 2 // 3) - self.padding
         self.title_image = pygame.transform.scale(self.title_image, (title_image_width, title_image_height))
-        self.title_text = font.render('The Last Stand', True, (255, 255, 255))
-        self.start_text = font.render('Press any key to start', True, (255, 255, 255))
+        self.title_text = self.title_font.render('The Last Stand', True, (255, 255, 255))
+        self.start_text = self.subtitle_font.render('Press any key to start', True, (255, 255, 255))
         self.title_music = 'audio/title_track.ogg'  # Path to your title music file
         pygame.mixer.init()
         pygame.mixer.music.load(self.title_music)
@@ -23,8 +25,8 @@ class TitleScreen:
     def draw(self):
         self.screen.fill((0, 0, 0))
         self.screen.blit(self.title_image, (self.padding, self.padding))
-        self.screen.blit(self.title_text, (self.width // 2 - self.title_text.get_width() // 2, self.height * 2 // 3 + 20))
-        self.screen.blit(self.start_text, (self.width // 2 - self.start_text.get_width() // 2, self.height * 2 // 3 + 60))
+        self.screen.blit(self.title_text, (self.width // 2 - self.title_text.get_width() // 2, self.height * 2 // 3 + 40))
+        self.screen.blit(self.start_text, (self.width // 2 - self.start_text.get_width() // 2, self.height * 2 // 3 + 100))
         pygame.display.flip()
 
     def stop_music(self):
@@ -39,6 +41,46 @@ class TitleScreen:
                     exit()
                 elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
                     waiting_for_start = False
+            self.draw()
+
+class InstructionsScreen:
+    def __init__(self, screen, font, width, height):
+        self.screen = screen
+        self.font = font
+        self.width = width
+        self.height = height
+        self.padding = 20
+        self.instructions = [
+            "Instructions:",
+            "1. Use arrow keys to move your character.",
+            "2. Interact with stands to gain control.",
+            "3. Sabotage enemy stands to gain an advantage.",
+            "4. Avoid enemies and obstacles.",
+            "5. First to control all stands wins.",
+            "Press ESC to return to the title screen."
+        ]
+        self.bg_color = (0, 0, 0)
+        self.text_color = (255, 255, 255)
+
+    def draw(self):
+        self.screen.fill(self.bg_color)
+        y = self.padding
+        for line in self.instructions:
+            text = self.font.render(line, True, self.text_color)
+            self.screen.blit(text, (self.padding, y))
+            y += text.get_height() + self.padding
+        pygame.display.flip()
+
+    def show(self):
+        showing_instructions = True
+        while showing_instructions:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        showing_instructions = False
             self.draw()
 
 
