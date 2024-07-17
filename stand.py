@@ -72,6 +72,8 @@ class Stand:
         self.encounter_completed = False  # Flag to indicate if encounter dialogue has completed
         self.is_sabotage_target = False  # Mark if this stand is the target for sabotage
         self.running_persons = []  # List to store running persons
+        self.sabotage_alpha = 255  # Initial alpha value for the stand image
+        self.sabotage_alpha_direction = -5  # Direction for alpha change
 
     def update_running_persons(self, map_width, map_height):
         self.running_persons = [person for person in self.running_persons if not person.is_off_screen(map_width, map_height)]
@@ -107,7 +109,16 @@ class Stand:
             image = self.image
 
         if image:
-            surface.blit(image, stand_rect.topleft)
+            if self.is_sabotage_target:
+                self.sabotage_alpha += self.sabotage_alpha_direction
+                if self.sabotage_alpha <= 100 or self.sabotage_alpha >= 255:
+                    self.sabotage_alpha_direction *= -1
+
+                temp_image = image.copy()
+                temp_image.fill((255, 255, 255, self.sabotage_alpha), special_flags=pygame.BLEND_RGBA_MULT)
+                surface.blit(temp_image, stand_rect.topleft)
+            else:
+                surface.blit(image, stand_rect.topleft)
         else:
             pygame.draw.rect(surface, self.color, stand_rect)
 
@@ -237,8 +248,6 @@ class Stand:
                 dialogue_manager.start_dialogue(dialogue_texts, time.time(), self.position, update_message_box,
                                                 source="player" if isinstance(entity, Player) else "enemy")
 
-
-
             elif encounter_type == 2:
                 encounter_2_success_movement_delay = 5.5
                 encounter_2_failure_movement_delay = 2
@@ -270,7 +279,6 @@ class Stand:
                     else:
                         self.sabotage_required = True
                         game_state_manager.start_sabotage(self)
-                        self.is_sabotage_target = True
                         # Disable player movement for 2 seconds
                         game_state_manager.encounter_triggered_by_player = True
                         game_state_manager.player_movement_delay = time.time() + encounter_2_failure_movement_delay
@@ -278,6 +286,7 @@ class Stand:
 
                         def update_message_box():
                             message_box.add_message("You lost the fight. You'll have to sabotage them next time.")
+                            self.is_sabotage_target = True
                 else:
                     success_chance = base_success_chance
                     roll = random.randint(1, 100)
@@ -313,7 +322,6 @@ class Stand:
                     self.color = (255, 250, 205)
                     game_state_manager.start_sabotage(self)
                     game_state_manager.sabotage_stand_id = self.id
-                    self.is_sabotage_target = True
 
                     # Disable player movement for 4 seconds
                     game_state_manager.encounter_triggered_by_player = True
@@ -325,6 +333,7 @@ class Stand:
                     def update_message_box():
                         message_box.add_message(
                             "You need to sabotage this stand. Go to a quiet place to get the foul-smelling lemonade.")
+                        self.is_sabotage_target = True
 
                     dialogue_manager.start_dialogue(dialogue_texts, time.time(), self.position, update_message_box,
                                                     source="player")

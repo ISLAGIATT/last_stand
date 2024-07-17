@@ -228,7 +228,6 @@ while running:
             game_state_manager.encounter_triggered_by_enemy = False  # Reset the flag
         enemy.move()
 
-
     # Enemy pathfinding
     if not enemy.target:
         enemy.set_target(
@@ -237,6 +236,13 @@ while running:
                            [cg for cg in opp_stands if isinstance(cg, CookieGirl)],
                            [hb for hb in opp_stands if isinstance(hb, HirableBully)], screen, message_box)
     enemy.update_score(opp_stands)
+
+    # Ensure only the target stand is highlighted for sabotage
+    for stand in opp_stands:
+        if stand.id == game_state_manager.sabotage_stand_id:
+            stand.is_sabotage_target = True
+        else:
+            stand.is_sabotage_target = False
 
     # Scoring
     current_time = pygame.time.get_ticks()
