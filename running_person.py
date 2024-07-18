@@ -32,7 +32,7 @@ class RunningPerson:
         if self.direction == 'left':
             return [-self.size, self.position[1]]
         elif self.direction == 'right':
-            return [2000 + self.size, self.position[1]]
+            return [5000 + self.size, self.position[1]]
 
     def move(self):
         if self.target:

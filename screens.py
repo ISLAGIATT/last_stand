@@ -1,9 +1,97 @@
 import pygame
 import sys
 
+def render_text_wrapped(text, font, max_width):
+    words = text.split(' ')
+    lines = []
+    current_line = []
+
+    for word in words:
+        current_line.append(word)
+        width, _ = font.size(' '.join(current_line))
+        if width > max_width:
+            current_line.pop()
+            lines.append(' '.join(current_line))
+            current_line = [word]
+
+    lines.append(' '.join(current_line))
+    return [font.render(line, True, (255, 255, 255)) for line in lines]
+
+class InstructionScreen:
+    def __init__(self, screen, font, width, height):
+        self.screen = screen
+        self.font = font
+        self.width = width
+        self.height = height
+        self.running = True
+        self.instruction_font = pygame.font.SysFont("Courier", 16, bold=True)
+
+        # Load animations or images for each character and resize to 75px
+        self.bully_images = [pygame.transform.scale(pygame.image.load(f'anim/bully/bully{i}.png').convert_alpha(), (75, 75)) for i in range(1, 6)]
+        self.cookie_girl_images = [pygame.transform.scale(pygame.image.load(f'anim/cookie_girl/cookie_girl{i}.png').convert_alpha(), (75, 75)) for i in range(1, 5)]
+        self.cop_images = [pygame.transform.scale(pygame.image.load(f'anim/cop/cop_down{i}.png').convert_alpha(), (75, 75)) for i in range(1, 7)]
+        self.player_images = [pygame.transform.scale(pygame.image.load(f'anim/player/player_idle{i}.png').convert_alpha(), (75, 75)) for i in range(1, 7)]
+        self.customer_images = [pygame.transform.scale(pygame.image.load(f'anim/customer/customer_walk_down{i}.png').convert_alpha(), (75, 75)) for i in range(1, 7)]
+        self.stand_image = pygame.transform.scale(pygame.image.load('images/stand_200px.png').convert_alpha(), (75, 75))
+
+        self.frame_index = 0
+        self.animation_speed = 0.01
+        self.frame_timer = 0
+
+    def draw(self):
+        self.screen.fill((0, 0, 0))
+
+        # Draw title
+        title_text = self.font.render('Game Instructions', True, (255, 255, 255))
+        self.screen.blit(title_text, (self.width // 2 - title_text.get_width() // 2, 50))
+
+        # Update animation frame index
+        self.frame_timer += self.animation_speed
+        if self.frame_timer >= 1:
+            self.frame_timer = 0
+            self.frame_index = (self.frame_index + 1) % max(len(self.bully_images), len(self.cookie_girl_images), len(self.cop_images), len(self.player_images), len(self.customer_images))
+
+        # Characters and labels
+        characters = [
+            ('this is you', self.player_images),
+            ('scare off rival lemonade stand owners!', [self.stand_image]),
+            ('bullies can help in fights and make it harder for the other guy to make money, but will steal from you', self.bully_images),
+            ('customers will slow you down', self.customer_images),
+            ('girl scouts will sell cookies for you, but will rat you out if you get out of hand', self.cookie_girl_images),
+            ('after the time limit is up, this guy will come shake you down', self.cop_images),
+        ]
+
+        y_start = 150
+        y_offset = 100
+        max_text_width = self.width - 250
+
+        for i, (label, images) in enumerate(characters):
+            x_position = 100 if i % 2 == 0 else self.width - 175  # Alternate left and right
+            self.screen.blit(images[self.frame_index % len(images)], (x_position, y_start + i * y_offset))
+            wrapped_text = render_text_wrapped(label, self.instruction_font, max_text_width)
+            text_x_position = x_position + 100 if i % 2 == 0 else x_position - max(wrapped_text, key=lambda
+                s: s.get_width()).get_width() - 25
+            for j, line in enumerate(wrapped_text):
+                self.screen.blit(line, (text_x_position, y_start + i * y_offset + 25 + j * 30))
+
+        pygame.display.flip()
+
+    def show(self):
+        self.running = True
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                    pygame.quit()
+                    exit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.running = False  # Exit to title screen
+
+            self.draw()
 
 class TitleScreen:
-    def __init__(self, screen, font, width, height):
+    def __init__(self, screen, font, width, height, instruction_screen):
         self.screen = screen
         self.font = font
         self.width = width
@@ -16,17 +104,32 @@ class TitleScreen:
         title_image_height = (height * 2 // 3) - self.padding
         self.title_image = pygame.transform.scale(self.title_image, (title_image_width, title_image_height))
         self.title_text = self.title_font.render('The Last Stand', True, (255, 255, 255))
-        self.start_text = self.subtitle_font.render('Press any key to start', True, (255, 255, 255))
+        # self.start_text = self.subtitle_font.render('Press any key to start', True, (255, 255, 255))
+        self.instruction_text = font.render('Instructions', True, (255, 255, 255))
         self.title_music = 'audio/title_track.ogg'  # Path to your title music file
         pygame.mixer.init()
         pygame.mixer.music.load(self.title_music)
         pygame.mixer.music.play(-1)  # Loop the music
 
+        self.options = [
+            ('Start Game', self.subtitle_font.render('Press any key to start', True, (255, 255, 255))),
+            ('Instructions', self.subtitle_font.render('Instructions', True, (255, 255, 255)))
+        ]
+        self.current_option = 0
+        self.instruction_screen = instruction_screen
+
     def draw(self):
         self.screen.fill((0, 0, 0))
         self.screen.blit(self.title_image, (self.padding, self.padding))
         self.screen.blit(self.title_text, (self.width // 2 - self.title_text.get_width() // 2, self.height * 2 // 3 + 40))
-        self.screen.blit(self.start_text, (self.width // 2 - self.start_text.get_width() // 2, self.height * 2 // 3 + 100))
+        # self.screen.blit(self.start_text, (self.width // 2 - self.start_text.get_width() // 2, self.height * 2 // 3 + 100))
+
+        for i, (text, option_surface) in enumerate(self.options):
+            color = (255, 255, 0) if i == self.current_option else (255, 255, 255)
+            option_surface = self.subtitle_font.render(text, True, color)
+            self.screen.blit(option_surface,
+                             (self.width // 2 - option_surface.get_width() // 2, self.height * 2 // 3 + 100 + i * 40))
+        pygame.display.flip()
         pygame.display.flip()
 
     def stop_music(self):
@@ -39,49 +142,31 @@ class TitleScreen:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     exit()
-                elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-                    waiting_for_start = False
-            self.draw()
-
-class InstructionsScreen:
-    def __init__(self, screen, font, width, height):
-        self.screen = screen
-        self.font = font
-        self.width = width
-        self.height = height
-        self.padding = 20
-        self.instructions = [
-            "Instructions:",
-            "1. Use arrow keys to move your character.",
-            "2. Interact with stands to gain control.",
-            "3. Sabotage enemy stands to gain an advantage.",
-            "4. Avoid enemies and obstacles.",
-            "5. First to control all stands wins.",
-            "Press ESC to return to the title screen."
-        ]
-        self.bg_color = (0, 0, 0)
-        self.text_color = (255, 255, 255)
-
-    def draw(self):
-        self.screen.fill(self.bg_color)
-        y = self.padding
-        for line in self.instructions:
-            text = self.font.render(line, True, self.text_color)
-            self.screen.blit(text, (self.padding, y))
-            y += text.get_height() + self.padding
-        pygame.display.flip()
-
-    def show(self):
-        showing_instructions = True
-        while showing_instructions:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        showing_instructions = False
+                    if event.key == pygame.K_UP:
+                        self.current_option = (self.current_option - 1) % len(self.options)
+                    elif event.key == pygame.K_DOWN:
+                        self.current_option = (self.current_option + 1) % len(self.options)
+                    elif event.key == pygame.K_RETURN:
+                        if self.current_option == 0:
+                            waiting_for_start = False
+                        elif self.current_option == 1:
+                            self.stop_music()
+                            self.instruction_screen.show()
+                            pygame.mixer.music.play(-1)  # Restart the title music
+                            self.draw()  # Redraw title screen after returning from instructions
+                    elif event.type == pygame.MOUSEBUTTONDOWN:
+                        if self.current_option == 0:
+                            waiting_for_start = False
+                        elif self.current_option == 1:
+                            self.stop_music()
+                            self.instruction_screen.show()
+                            pygame.mixer.music.play(-1)  # Restart the title music
+                            self.draw()  # Redraw title screen after returning from instructions
+
             self.draw()
+
+
 
 
 class GameOverScreen:

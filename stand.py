@@ -285,7 +285,7 @@ class Stand:
                         dialogue_texts = ["Ow. Sucker punch me? I'll be back."]
 
                         def update_message_box():
-                            message_box.add_message("You lost the fight. You'll have to sabotage them next time.")
+                            message_box.add_message("You lost the fight. Return to this stand with some foul-tasting lemonade!")
                             self.is_sabotage_target = True
                 else:
                     success_chance = base_success_chance
@@ -320,7 +320,6 @@ class Stand:
                     encounter_3_movement_delay = 3.5
                     # Initial encounter, no sabotage check yet
                     self.color = (255, 250, 205)
-                    game_state_manager.start_sabotage(self)
                     game_state_manager.sabotage_stand_id = self.id
 
                     # Disable player movement for 4 seconds
@@ -334,6 +333,7 @@ class Stand:
                         message_box.add_message(
                             "You need to sabotage this stand. Go to a quiet place to get the foul-smelling lemonade.")
                         self.is_sabotage_target = True
+                        game_state_manager.start_sabotage(self)
 
                     dialogue_manager.start_dialogue(dialogue_texts, time.time(), self.position, update_message_box,
                                                     source="player")
@@ -367,32 +367,44 @@ class Stand:
         self.encounter_completed = True
 
     @classmethod
-    def is_valid_position(cls, x, y, stands, min_distance=400):
+    def is_valid_position(cls, x, y, stands, min_distance=400, player_pos=None, enemy_pos=None, safe_distance=300):
         for stand in stands:
             dist = ((x - stand.position[0]) ** 2 + (y - stand.position[1]) ** 2) ** 0.5
             if dist < min_distance:
                 return False
+
+        if player_pos:
+            player_dist = ((x - player_pos[0]) ** 2 + (y - player_pos[1]) ** 2) ** 0.5
+            if player_dist < safe_distance:
+                return False
+
+        if enemy_pos:
+            enemy_dist = ((x - enemy_pos[0]) ** 2 + (y - enemy_pos[1]) ** 2) ** 0.5
+            if enemy_dist < safe_distance:
+                return False
+
         return True
 
     @classmethod
-    def generate_random_stands(cls, num_random_stands, num_cookie_girls, num_bullies, map_width, map_height):
+    def generate_random_stands(cls, num_random_stands, num_cookie_girls, num_bullies, map_width, map_height, player_pos,
+                               enemy_pos):
         opp_stands = []
         while len(opp_stands) < num_random_stands:
             x, y = random.randint(0, map_width), random.randint(0, map_height)
-            if cls.is_valid_position(x, y, opp_stands):
-                opp_stands.append(cls(x, y, 75, (255, 100, 0)))  # change stand image  size here
+            if cls.is_valid_position(x, y, opp_stands, player_pos=player_pos, enemy_pos=enemy_pos):
+                opp_stands.append(cls(x, y, 75, (255, 100, 0)))  # change stand image size here
 
         for _ in range(num_cookie_girls):
             while True:
                 x, y = random.randint(0, map_width), random.randint(0, map_height)
-                if cls.is_valid_position(x, y, opp_stands):
+                if cls.is_valid_position(x, y, opp_stands, player_pos=player_pos, enemy_pos=enemy_pos):
                     opp_stands.append(CookieGirl(x, y))
                     break
 
         for _ in range(num_bullies):
             while True:
                 x, y = random.randint(0, map_width), random.randint(0, map_height)
-                if cls.is_valid_position(x, y, opp_stands):
+                if cls.is_valid_position(x, y, opp_stands, player_pos=player_pos, enemy_pos=enemy_pos):
                     opp_stands.append(HirableBully(x, y))
                     break
         return opp_stands

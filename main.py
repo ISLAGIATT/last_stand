@@ -13,7 +13,7 @@ from message_box import MessageBox
 from paths import Path
 from player import Player
 from score_manager import ScoreManager
-from screens import TitleScreen, GameOverScreen
+from screens import TitleScreen, GameOverScreen, InstructionScreen
 from stand import Stand, CookieGirl, HirableBully
 
 pygame.init()
@@ -36,8 +36,11 @@ clock = pygame.time.Clock()
 font = pygame.font.Font(None, 36)
 stands_font = pygame.font.Font(None, 24)
 
+# Instruction Screen
+instruction_screen = InstructionScreen(screen, font, WIDTH, HEIGHT)
+
 # Title Screen
-title_screen = TitleScreen(screen, font, WIDTH, HEIGHT)
+title_screen = TitleScreen(screen, font, WIDTH, HEIGHT, instruction_screen)
 title_screen.show()  # Display the title screen
 
 # Fade out title screen music
@@ -68,8 +71,10 @@ player_cup = CountdownCup(home_stand.position[0] - 50, home_stand.position[1], 3
 score_manager = ScoreManager(player, enemy, font, stands_font, time_limit, player_cup)
 cop = Cop(MAP_WIDTH, MAP_HEIGHT, size=60, speed=3)
 
-# Generate stands
-opp_stands = Stand.generate_random_stands(14, 2, 2, MAP_WIDTH, MAP_HEIGHT)
+# Generate stands, don't spawn on players
+player_start_pos = (WIDTH // 2, HEIGHT // 2)
+enemy_start_pos = (random.randint(0, MAP_WIDTH), random.randint(0, MAP_HEIGHT))
+opp_stands = Stand.generate_random_stands(16, 1, 1, MAP_WIDTH, MAP_HEIGHT, player_start_pos, enemy_start_pos)
 
 # Filter stands for path generation
 opp_stand_positions = [stand for stand in opp_stands if not isinstance(stand, (CookieGirl, HirableBully))]
@@ -80,6 +85,7 @@ map_objects = [
     MapObject(100, 1600, 40, (139, 69, 19))
 ]
 
+# Camera offset
 camera_offset = [0, 0]
 
 # Initialize home stand checks
@@ -180,7 +186,7 @@ def check_collision_with_customers(player_rect, customers, camera_offset):
 
 
 # Display title screen
-title_screen = TitleScreen(screen, font, WIDTH, HEIGHT)
+title_screen = TitleScreen(screen, font, WIDTH, HEIGHT, instruction_screen)
 title_screen.draw()
 
 running = True
