@@ -267,7 +267,7 @@ class Stand:
 
                         def update_message_box():
                             message_box.add_message("You won the fight! This stand is now under your control.")
-                            running_person = RunningPerson(self.position[0], self.position[1], 50,
+                            running_person = RunningPerson(self.position[0], self.position[1], 25,
                                                            entity.speed)
                             self.running_persons.append(running_person)
                             if bully_bonus > 0 and base_success_chance < roll <= success_chance:

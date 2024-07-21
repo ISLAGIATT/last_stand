@@ -65,9 +65,10 @@ dialogue_manager = DialogueManager(font, wrap_width=200)
 message_box = MessageBox(550, 175, WIDTH, HEIGHT, font)
 enemy = Enemy(random.randint(0, MAP_WIDTH), random.randint(0, MAP_HEIGHT), 25, 4)
 player = Player(WIDTH // 2, HEIGHT // 2, 50, 5, (255, 0, 0), MAP_WIDTH, MAP_HEIGHT)
-home_stand = Stand(200, 300, 100, (0, 255, 0), 'images/home_base.png')
+home_base = Stand(150, 250, 100, (0, 255, 0), 'images/home_base.png')
+home_stand = Stand(WIDTH // 2, HEIGHT // 2, 75, (0, 255, 0), 'images/stand_empty.png')
 second_home_stand = Stand(2000, 1500, 100, (0, 255, 0), 'images/home_base.png')
-player_cup = CountdownCup(home_stand.position[0] - 50, home_stand.position[1], 30, 100, 10)
+player_cup = CountdownCup(home_base.position[0] - 50, home_base.position[1], 30, 100, 10)
 score_manager = ScoreManager(player, enemy, font, stands_font, time_limit, player_cup)
 cop = Cop(MAP_WIDTH, MAP_HEIGHT, size=60, speed=3)
 
@@ -115,7 +116,7 @@ def handle_home_collision():
     global time_at_home_stand, player_in_contact_with_home_stand
     if game_state_manager.sabotage_in_progress:
         if player_rect.colliderect(home_stand_rect):
-            home_stand.set_home_stand_image(True)
+            home_base.set_home_stand_image(True)
             player_in_contact_with_home_stand = True
             if time_at_home_stand is None:
                 time_at_home_stand = time.time()
@@ -139,7 +140,7 @@ def handle_home_collision():
                 game_state_manager.got_pee = True
                 player_in_contact_with_home_stand = False
         else:
-            home_stand.set_home_stand_image(False)
+            home_base.set_home_stand_image(False)
             second_home_stand.set_home_stand_image(False)  # Reset image for second home stand
             if not player_cup.full:
                 time_at_home_stand = None
@@ -277,7 +278,8 @@ while running:
         customer.draw(screen, camera_offset)
 
     # Draw stands
-    home_stand_rect = home_stand.draw(screen, camera_offset)
+    home_stand.draw(screen, camera_offset)
+    home_stand_rect = home_base.draw(screen, camera_offset)
     second_home_stand_rect = second_home_stand.draw(screen, camera_offset)
     for opp_stand in opp_stands:
         opp_stand.update_running_persons(MAP_WIDTH, MAP_HEIGHT)
@@ -304,7 +306,7 @@ while running:
         game_state_manager.complete_sabotage(player_cup)
     if game_state_manager.sabotage_in_progress or player_cup.full:
         player_cup.draw(screen)
-    player_cup.update_position(home_stand.position[0] - 50, home_stand.position[1])
+    player_cup.update_position(home_base.position[0] - 50, home_base.position[1])
 
     # Cop Logic
     elapsed_time = current_time - start_time

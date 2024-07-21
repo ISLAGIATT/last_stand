@@ -24,25 +24,29 @@ class InstructionScreen:
         self.width = width
         self.height = height
         self.running = True
-        self.instruction_font = pygame.font.SysFont("Courier", 16, bold=True)
+        self.instruction_font = pygame.font.SysFont("Courier", 18, bold=True)
 
         # Load animations or images for each character and resize to 75px
-        self.bully_images = [pygame.transform.scale(pygame.image.load(f'anim/bully/bully{i}.png').convert_alpha(), (75, 75)) for i in range(1, 6)]
+        self.bully_images = [pygame.transform.scale(pygame.image.load(f'anim/bully/bully{i}.png').convert_alpha(), (50, 50)) for i in range(1, 6)]
         self.cookie_girl_images = [pygame.transform.scale(pygame.image.load(f'anim/cookie_girl/cookie_girl{i}.png').convert_alpha(), (75, 75)) for i in range(1, 5)]
-        self.cop_images = [pygame.transform.scale(pygame.image.load(f'anim/cop/cop_down{i}.png').convert_alpha(), (75, 75)) for i in range(1, 7)]
-        self.player_images = [pygame.transform.scale(pygame.image.load(f'anim/player/player_idle{i}.png').convert_alpha(), (75, 75)) for i in range(1, 7)]
-        self.customer_images = [pygame.transform.scale(pygame.image.load(f'anim/customer/customer_walk_down{i}.png').convert_alpha(), (75, 75)) for i in range(1, 7)]
+        self.cop_images = [pygame.transform.scale(pygame.image.load(f'anim/cop/cop_down{i}.png').convert_alpha(), (50, 50)) for i in range(1, 7)]
+        self.player_images = [pygame.transform.scale(pygame.image.load(f'anim/player/player_idle{i}.png').convert_alpha(), (50, 50)) for i in range(1, 7)]
+        self.customer_images = [pygame.transform.scale(pygame.image.load(f'anim/customer/customer_walk_down{i}.png').convert_alpha(), (50, 50)) for i in range(1, 7)]
+        self.outhouse_image = pygame.transform.scale(pygame.image.load('images/home_base.png').convert_alpha(), (75, 75))
         self.stand_image = pygame.transform.scale(pygame.image.load('images/stand_200px.png').convert_alpha(), (75, 75))
 
         self.frame_index = 0
         self.animation_speed = 0.01
         self.frame_timer = 0
+        self.fade_text_alpha = 0
+        self.fade_direction = 1
+        self.fade_speed = .5
 
     def draw(self):
         self.screen.fill((0, 0, 0))
 
         # Draw title
-        title_text = self.font.render('Game Instructions', True, (255, 255, 255))
+        title_text = self.font.render('How to Play', True, (255, 255, 255))
         self.screen.blit(title_text, (self.width // 2 - title_text.get_width() // 2, 50))
 
         # Update animation frame index
@@ -53,26 +57,50 @@ class InstructionScreen:
 
         # Characters and labels
         characters = [
-            ('this is you', self.player_images),
+            ('This is you', self.player_images, 'This is your opponent', self.player_images),
             ('scare off rival lemonade stand owners!', [self.stand_image]),
+            ('find a quiet place to sabotage rivals that dont want to leave', [self.outhouse_image]),
             ('bullies can help in fights and make it harder for the other guy to make money, but will steal from you', self.bully_images),
-            ('customers will slow you down', self.customer_images),
             ('girl scouts will sell cookies for you, but will rat you out if you get out of hand', self.cookie_girl_images),
-            ('after the time limit is up, this guy will come shake you down', self.cop_images),
+            ('customers will slow you down', self.customer_images),
+            ('after the time limit is up, the cops will come shake you down', self.cop_images),
         ]
 
         y_start = 150
-        y_offset = 100
+        y_offset = 85
         max_text_width = self.width - 250
 
-        for i, (label, images) in enumerate(characters):
-            x_position = 100 if i % 2 == 0 else self.width - 175  # Alternate left and right
-            self.screen.blit(images[self.frame_index % len(images)], (x_position, y_start + i * y_offset))
-            wrapped_text = render_text_wrapped(label, self.instruction_font, max_text_width)
-            text_x_position = x_position + 100 if i % 2 == 0 else x_position - max(wrapped_text, key=lambda
-                s: s.get_width()).get_width() - 25
-            for j, line in enumerate(wrapped_text):
-                self.screen.blit(line, (text_x_position, y_start + i * y_offset + 25 + j * 30))
+        for i, char in enumerate(characters):
+            if len(char) == 4:  # This is the player/opponent line
+                player_label, player_images, opponent_label, opponent_images = char
+                self.screen.blit(player_images[self.frame_index % len(player_images)], (100, y_start + i * y_offset))
+                player_text = self.instruction_font.render(player_label, True, (255, 255, 255))
+                self.screen.blit(player_text, (180, y_start + i * y_offset + 25))
+
+                self.screen.blit(opponent_images[self.frame_index % len(opponent_images)], (self.width - 175, y_start + i * y_offset))
+                opponent_text = self.instruction_font.render(opponent_label, True, (255, 255, 255))
+                self.screen.blit(opponent_text, (self.width - 175 - opponent_text.get_width() - 10, y_start + i * y_offset + 25))
+            else:
+                label, images = char
+                x_position = 100 if i % 2 == 0 else self.width - 175  # Alternate left and right
+                self.screen.blit(images[self.frame_index % len(images)], (x_position, y_start + i * y_offset))
+                wrapped_text = render_text_wrapped(label, self.instruction_font, max_text_width)
+                text_x_position = x_position + 100 if i % 2 == 0 else x_position - max(wrapped_text, key=lambda s: s.get_width()).get_width() - 25
+                for j, line in enumerate(wrapped_text):
+                    self.screen.blit(line, (text_x_position, y_start + i * y_offset + 25 + j * 30))
+
+        # Fade in and out text at the bottom
+        self.fade_text_alpha += self.fade_direction * self.fade_speed  # Adjust fade speed here
+        if self.fade_text_alpha <= 0:
+            self.fade_text_alpha = 0
+            self.fade_direction = 1
+        elif self.fade_text_alpha >= 255:
+            self.fade_text_alpha = 255
+            self.fade_direction = -1
+
+        fade_text = self.instruction_font.render('Press any key to go back', True, (255, 255, 255))
+        fade_text.set_alpha(self.fade_text_alpha)
+        self.screen.blit(fade_text, (self.width // 2 - fade_text.get_width() // 2, self.height - 50))
 
         pygame.display.flip()
 
@@ -85,8 +113,7 @@ class InstructionScreen:
                     pygame.quit()
                     exit()
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        self.running = False  # Exit to title screen
+                    self.running = False  # Exit to title screen
 
             self.draw()
 
