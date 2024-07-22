@@ -63,6 +63,7 @@ class Stand:
 
         self.message_box = None
         self.encounter_triggered = False
+        self.enemy_in_contact = False  # Initialize enemy_in_contact attribute
         self.controlled_by_player = False # for draw method
         self.controlled_by_enemy = False # for draw method
         self.inactive = False # for failed sabotage draw method

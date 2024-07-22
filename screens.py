@@ -1,4 +1,5 @@
 import pygame
+import time
 import sys
 
 def render_text_wrapped(text, font, max_width):
@@ -24,7 +25,7 @@ class InstructionScreen:
         self.width = width
         self.height = height
         self.running = True
-        self.instruction_font = pygame.font.SysFont("Courier", 18, bold=True)
+        self.instruction_font = pygame.font.SysFont("Courier", 22, bold=True)
 
         # Load animations or images for each character and resize to 75px
         self.bully_images = [pygame.transform.scale(pygame.image.load(f'anim/bully/bully{i}.png').convert_alpha(), (50, 50)) for i in range(1, 6)]
@@ -46,7 +47,7 @@ class InstructionScreen:
         self.screen.fill((0, 0, 0))
 
         # Draw title
-        title_text = self.font.render('How to Play', True, (255, 255, 255))
+        title_text = self.font.render('Things to Know', True, (255, 255, 255))
         self.screen.blit(title_text, (self.width // 2 - title_text.get_width() // 2, 50))
 
         # Update animation frame index
@@ -66,7 +67,7 @@ class InstructionScreen:
             ('after the time limit is up, the cops will come shake you down', self.cop_images),
         ]
 
-        y_start = 150
+        y_start = 125
         y_offset = 85
         max_text_width = self.width - 250
 
@@ -194,10 +195,8 @@ class TitleScreen:
             self.draw()
 
 
-
-
 class GameOverScreen:
-    def __init__(self, screen, font, player_score, opponent_score, width, height):
+    def __init__(self, screen, font, player_score, opponent_score, width, height, title_screen):
         self.screen = screen
         self.font = font
         self.game_over_font = pygame.font.SysFont("Arial", 36, "bold")
@@ -209,8 +208,9 @@ class GameOverScreen:
         self.game_over_image = pygame.image.load('images/game_over.png').convert_alpha()
         game_over_image_width = width - 2 * self.padding
         game_over_image_height = (height * 2 // 3) - self.padding
-        self.game_over_image = pygame.transform.scale(self.game_over_image,
-                                                      (game_over_image_width, game_over_image_height))
+        self.game_over_image = pygame.transform.scale(self.game_over_image, (game_over_image_width, game_over_image_height))
+        self.title_screen = title_screen
+        self.blink_start_time = time.time()
 
     def draw(self):
         self.screen.fill((0, 0, 0))
@@ -232,21 +232,39 @@ class GameOverScreen:
         self.draw_text_with_background(player_score_text,
                                        (self.width // 2 - player_score_text.get_width() // 2, 600))
         self.draw_text_with_background(opponent_score_text,
-                                       (self.width // 2 - opponent_score_text.get_width() // 2, 600 + 50))
+                                       (self.width // 2 - opponent_score_text.get_width() // 2, 650))
         self.draw_text_with_background(winner_text,
-                                       (self.width // 2 - winner_text.get_width() // 2, 600 + 100))
+                                       (self.width // 2 - winner_text.get_width() // 2, 700))
+
+        self.draw_blinking_text("Press any key to return to the title screen", self.width // 2, self.height - 50)
 
         pygame.display.flip()
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                elif event.type == pygame.KEYDOWN:
-                    pygame.quit()
-                    sys.exit()
 
     def draw_text_with_background(self, text_surface, position):
         rect = text_surface.get_rect(topleft=position).inflate(10, 10)
         pygame.draw.rect(self.screen, (0, 0, 0), rect)
         self.screen.blit(text_surface, position)
+
+    def draw_blinking_text(self, text, x, y, speed=0.25):
+        speed = 1.5
+        current_time = time.time()
+        alpha = (abs((current_time - self.blink_start_time) % speed - speed / 2) / (speed / 2)) * 255
+        text_surface = self.font.render(text, True, (255, 255, 255))
+        text_surface.set_alpha(alpha)
+        text_rect = text_surface.get_rect(center=(x, y))
+        self.screen.blit(text_surface, text_rect.topleft)
+
+    def show(self):
+        self.running = True
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                elif event.type == pygame.KEYDOWN:
+                    self.running = False
+                    self.title_screen.show()
+
+            self.draw()
+            pygame.display.flip()
+            pygame.time.Clock().tick(60)

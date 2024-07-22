@@ -57,13 +57,14 @@ fps_font = pygame.font.Font(None, 36)
 
 # Timer variables
 start_time = pygame.time.get_ticks()
-time_limit = 1.5 * 60 * 1000  # 2 minutes in milliseconds
+time_limit = 1 * 60 * 1000  # 2 minutes in milliseconds
+# time_limit = 1000 for testing gameover screen
 
 # Instantiate game objects
 game_state_manager = GameStateManager()
 dialogue_manager = DialogueManager(font, wrap_width=200)
 message_box = MessageBox(550, 175, WIDTH, HEIGHT, font)
-enemy = Enemy(random.randint(0, MAP_WIDTH), random.randint(0, MAP_HEIGHT), 25, 4)
+enemy = Enemy(random.randint(0, MAP_WIDTH), random.randint(0, MAP_HEIGHT), 50, 4)
 player = Player(WIDTH // 2, HEIGHT // 2, 50, 5, (255, 0, 0), MAP_WIDTH, MAP_HEIGHT)
 home_base = Stand(150, 250, 100, (0, 255, 0), 'images/home_base.png')
 home_stand = Stand(WIDTH // 2, HEIGHT // 2, 75, (0, 255, 0), 'images/stand_empty.png')
@@ -326,8 +327,8 @@ while running:
         if cop.check_collision(player.position, player.size):
             print("Game Over")
             running = False
-            game_over_screen = GameOverScreen(screen, font, score_manager.player_score, score_manager.opponent_score, WIDTH, HEIGHT)
-            game_over_screen.draw()
+            game_over_screen = GameOverScreen(screen, font, score_manager.player_score, score_manager.opponent_score, WIDTH, HEIGHT, title_screen)
+            game_over_screen.show()
 
     # Draw dialogue
     dialogue_manager.draw_dialogue(screen, camera_offset, player.position, npc_text_color=(255, 255, 255), npc_visible_duration=2)
