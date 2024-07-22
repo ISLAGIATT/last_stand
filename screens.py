@@ -32,6 +32,7 @@ class InstructionScreen:
         self.cookie_girl_images = [pygame.transform.scale(pygame.image.load(f'anim/cookie_girl/cookie_girl{i}.png').convert_alpha(), (75, 75)) for i in range(1, 5)]
         self.cop_images = [pygame.transform.scale(pygame.image.load(f'anim/cop/cop_down{i}.png').convert_alpha(), (50, 50)) for i in range(1, 7)]
         self.player_images = [pygame.transform.scale(pygame.image.load(f'anim/player/player_idle{i}.png').convert_alpha(), (50, 50)) for i in range(1, 7)]
+        self.enemy_images = [pygame.transform.scale(pygame.image.load(f'anim/enemy/enemy_idle{i}.png').convert_alpha(), (50, 50)) for i in range(1, 7)]
         self.customer_images = [pygame.transform.scale(pygame.image.load(f'anim/customer/customer_walk_down{i}.png').convert_alpha(), (50, 50)) for i in range(1, 7)]
         self.outhouse_image = pygame.transform.scale(pygame.image.load('images/home_base.png').convert_alpha(), (75, 75))
         self.stand_image = pygame.transform.scale(pygame.image.load('images/stand_200px.png').convert_alpha(), (75, 75))
@@ -58,7 +59,7 @@ class InstructionScreen:
 
         # Characters and labels
         characters = [
-            ('This is you', self.player_images, 'This is your opponent', self.player_images),
+            ('This is you', self.player_images, 'This is your opponent', self.enemy_images),
             ('scare off rival lemonade stand owners!', [self.stand_image]),
             ('find a quiet place to sabotage rivals that dont want to leave', [self.outhouse_image]),
             ('bullies can help in fights and make it harder for the other guy to make money, but will steal from you', self.bully_images),
