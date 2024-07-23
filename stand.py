@@ -28,7 +28,7 @@ class Stand:
         self.player_image_path = "images/stand_player.png"
         self.enemy_image_path = "images/stand_enemy.png"
         self.contact_image_path = "images/home_base_occupied.png"
-        self.inactive_image_path = 'images/stand_inactive.gif'
+        self.inactive_image_path = 'images/stand_inactive.png'
 
         self.image = pygame.image.load(image_path) if image_path else None
 
@@ -222,11 +222,15 @@ class Stand:
                     game_state_manager.encounter_triggered_by_enemy = True
                     game_state_manager.enemy_movement_delay = time.time() + encounter_1_movement_delay
 
-                dialogue_texts = [
-                    "Nice lemonade stand. Would be a shame if something happened to it.",
-                    "Oh no! This took three weeks of allowance to build!",
-                    "I'll take good care of it."
+                dialogue_options = [
+                    ["Nice lemonade stand. Would be a shame if something happened to it.",
+                     "Oh no! This took three weeks of allowance to build!",
+                     "I'll take good care of it."],
+                    ["Hey, nice setup you got here.",
+                     "Thanks! I've been working on it for a while.",
+                     "Well, it's mine now."]
                 ]
+                dialogue_texts = random.choice(dialogue_options)
                 if isinstance(entity, Player):
                     self.pending_control = "player"
                     self.color = (0, 255, 0)  # Change to green
@@ -263,7 +267,11 @@ class Stand:
                         # Disable player movement for 6 seconds
                         game_state_manager.encounter_triggered_by_player = True
                         game_state_manager.player_movement_delay = time.time() + encounter_2_success_movement_delay
-                        dialogue_texts = ["Don't make me come back there.", "You don't have the guts.", "**SMACK**"]
+                        dialogue_options = [
+                            ["Don't make me come back there.", "You don't have the guts.", "**SMACK**"],
+                            ["I'm taking over.", "Leave me alone, I know karate kind of!", "**BONK**"]
+                        ]
+                        dialogue_texts = random.choice(dialogue_options)
                         self.pending_control = "player"
 
                         def update_message_box():
@@ -283,7 +291,11 @@ class Stand:
                         # Disable player movement for 2 seconds
                         game_state_manager.encounter_triggered_by_player = True
                         game_state_manager.player_movement_delay = time.time() + encounter_2_failure_movement_delay
-                        dialogue_texts = ["Ow. Sucker punch me? I'll be back."]
+                        dialogue_options = [
+                            ["Ow. Sucker punch me? I'll be back."],
+                            ["Ouch. You got lucky this time. I'll be back."]
+                        ]
+                        dialogue_texts = random.choice(dialogue_options)
 
                         def update_message_box():
                             message_box.add_message("You lost the fight. Return to this stand with some foul-tasting lemonade!")
@@ -327,8 +339,11 @@ class Stand:
                     game_state_manager.encounter_triggered_by_player = True
                     game_state_manager.player_movement_delay = time.time() + encounter_3_movement_delay
 
-                    dialogue_texts = [
-                        "This is mine now.", "Back off, my dad's a cop.", "Psh. I'll be back"]
+                    dialogue_options = [
+                        ["This is mine now.", "Back off, my dad's a cop.", "Psh. I'll be back"],
+                        ["I'm taking over.", "Dude my mom knows your mom", "Everyone knows your mom. I'll be back."]
+                    ]
+                    dialogue_texts = random.choice(dialogue_options)
 
                     def update_message_box():
                         message_box.add_message(

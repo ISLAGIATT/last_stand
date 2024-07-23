@@ -17,186 +17,188 @@ from score_manager import ScoreManager
 from screens import TitleScreen, GameOverScreen, InstructionScreen
 from stand import Stand, CookieGirl, HirableBully
 
-async def main_loop():
-    pygame.init()
-    pygame.mixer.init()
 
-    # Constants
-    WIDTH, HEIGHT = 1000, 800
-    MAP_WIDTH, MAP_HEIGHT = 2500, 2500
-    FPS = 60
+pygame.init()
+pygame.mixer.init()
 
-    # Colors
-    BRIGHT_GREEN = (0, 255, 0)
-    BLUE = (0, 0, 255)
-    MAGENTA = (255, 0, 255)
+# Constants
+WIDTH, HEIGHT = 1000, 800
+MAP_WIDTH, MAP_HEIGHT = 2500, 2500
+FPS = 60
 
-    # Setup screen
-    screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.SCALED | pygame.RESIZABLE | pygame.DOUBLEBUF)
-    pygame.display.set_caption('The Last Stand')
-    clock = pygame.time.Clock()
-    font = pygame.font.Font(None, 36)
-    stands_font = pygame.font.Font(None, 24)
+# Colors
+BRIGHT_GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+MAGENTA = (255, 0, 255)
 
-    # Instruction Screen
-    instruction_screen = InstructionScreen(screen, font, WIDTH, HEIGHT)
+# Setup screen
+screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.SCALED | pygame.RESIZABLE | pygame.DOUBLEBUF)
+pygame.display.set_caption('The Last Stand')
+clock = pygame.time.Clock()
+font = pygame.font.Font(None, 36)
+stands_font = pygame.font.Font(None, 24)
 
-    # Title Screen
-    title_screen = TitleScreen(screen, font, WIDTH, HEIGHT, instruction_screen)
-    title_screen.show()  # Display the title screen
+# Instruction Screen
+instruction_screen = InstructionScreen(screen, font, WIDTH, HEIGHT)
 
-    # Fade out title screen music
-    title_screen.stop_music()
+# Title Screen
+title_screen = TitleScreen(screen, font, WIDTH, HEIGHT, instruction_screen)
+title_screen.show()  # Display the title screen
 
-    # Load background image and convert
-    background_image = pygame.image.load('images/grass_v2.png').convert()
-    tile_width = background_image.get_width()
-    tile_height = background_image.get_height()
+# Fade out title screen music
+title_screen.stop_music()
 
-    # FPS counter
-    pygame.font.init()
-    fps_font = pygame.font.Font(None, 36)
+# Load background image and convert
+background_image = pygame.image.load('images/grass_v2.png').convert()
+tile_width = background_image.get_width()
+tile_height = background_image.get_height()
 
-    # Timer variables
-    start_time = pygame.time.get_ticks()
-    time_limit = 1 * 60 * 1000  # 2 minutes in milliseconds
-    # time_limit = 1000 for testing gameover screen
+# FPS counter
+pygame.font.init()
+fps_font = pygame.font.Font(None, 36)
 
-    # Cup fill speed in seconds
-    cup_fill_speed = 3
+# Timer variables
+start_time = pygame.time.get_ticks()
+time_limit = 1 * 60 * 1000  # 2 minutes in milliseconds
+# time_limit = 1000 for testing gameover screen
 
-    # Instantiate game objects
-    game_state_manager = GameStateManager()
-    dialogue_manager = DialogueManager(font, wrap_width=200)
-    message_box = MessageBox(550, 175, WIDTH, HEIGHT, font)
-    enemy = Enemy(random.randint(0, MAP_WIDTH), random.randint(0, MAP_HEIGHT), 50, 4)
-    player = Player(WIDTH // 2, HEIGHT // 2, 50, 5, (255, 0, 0), MAP_WIDTH, MAP_HEIGHT)
-    home_base = Stand(150, 250, 100, (0, 255, 0), 'images/home_base.png')
-    home_stand = Stand(WIDTH // 2, HEIGHT // 2, 75, (0, 255, 0), 'images/stand_empty.png')
-    second_home_stand = Stand(2000, 1500, 100, (0, 255, 0), 'images/home_base.png')
-    player_cup = CountdownCup(home_base.position[0] - 50, home_base.position[1], 30, 100, cup_fill_speed)
-    score_manager = ScoreManager(player, enemy, font, stands_font, time_limit, player_cup)
-    cop = Cop(MAP_WIDTH, MAP_HEIGHT, size=60, speed=3)
+# Cup fill speed in seconds
+cup_fill_speed = 3
 
-    # Generate stands, don't spawn on players
-    player_start_pos = (WIDTH // 2, HEIGHT // 2)
-    enemy_start_pos = (random.randint(0, MAP_WIDTH), random.randint(0, MAP_HEIGHT))
-    opp_stands = Stand.generate_random_stands(16, 1, 1, MAP_WIDTH, MAP_HEIGHT, player_start_pos, enemy_start_pos)
+# Instantiate game objects
+game_state_manager = GameStateManager()
+dialogue_manager = DialogueManager(font, wrap_width=200)
+message_box = MessageBox(550, 175, WIDTH, HEIGHT, font)
+enemy = Enemy(random.randint(0, MAP_WIDTH), random.randint(0, MAP_HEIGHT), 50, 4)
+player = Player(WIDTH // 2, HEIGHT // 2, 50, 5, (255, 0, 0), MAP_WIDTH, MAP_HEIGHT)
+home_base = Stand(150, 250, 100, (0, 255, 0), 'images/home_base.png')
+home_stand = Stand(WIDTH // 2, HEIGHT // 2, 75, (0, 255, 0), 'images/stand_empty.png')
+second_home_stand = Stand(2000, 1500, 100, (0, 255, 0), 'images/home_base.png')
+player_cup = CountdownCup(home_base.position[0] - 50, home_base.position[1], 30, 100, cup_fill_speed)
+score_manager = ScoreManager(player, enemy, font, stands_font, time_limit, player_cup)
+cop = Cop(MAP_WIDTH, MAP_HEIGHT, size=60, speed=3)
 
-    # Filter stands for path generation
-    opp_stand_positions = [stand for stand in opp_stands if not isinstance(stand, (CookieGirl, HirableBully))]
+# Generate stands, don't spawn on players
+player_start_pos = (WIDTH // 2, HEIGHT // 2)
+enemy_start_pos = (random.randint(0, MAP_WIDTH), random.randint(0, MAP_HEIGHT))
+opp_stands = Stand.generate_random_stands(16, 1, 1, MAP_WIDTH, MAP_HEIGHT, player_start_pos, enemy_start_pos)
 
-    # Map objects
-    map_objects = [
-        MapObject(1500, 1500, 30, (34, 139, 34)),
-        MapObject(100, 1600, 40, (139, 69, 19))
+# Filter stands for path generation
+opp_stand_positions = [stand for stand in opp_stands if not isinstance(stand, (CookieGirl, HirableBully))]
+
+# Map objects
+map_objects = [
+    MapObject(1500, 1500, 30, (34, 139, 34)),
+    MapObject(100, 1600, 40, (139, 69, 19))
+]
+
+# Camera offset
+camera_offset = [0, 0]
+
+# Initialize home stand checks
+last_update_time = pygame.time.get_ticks()
+last_speed_increase_time = pygame.time.get_ticks()
+home_encounter_triggered = False
+time_at_home_stand = None
+player_in_contact_with_home_stand = False
+time_at_enemy_home_stand = None
+# enemy_in_contact_with_home_stand = False
+
+# Generate paths
+paths = Path.generate_paths(opp_stand_positions)
+
+# Generate customers
+customers = []
+for stand in opp_stand_positions:
+    for _ in range(50 // len(opp_stand_positions)):  # Distribute 50 customers among stands
+        x = random.randint(stand.position[0] - 200, stand.position[0] + 200)
+        y = random.randint(stand.position[1] - 200, stand.position[1] + 200)
+        customers.append(Customer(x, y, 50, 1, stand, opp_stand_positions))
+
+# Set initial target for enemy
+enemy.set_target(opp_stands + [cg for cg in opp_stands if isinstance(cg, CookieGirl)] + [hb for hb in opp_stands if isinstance(hb, HirableBully)])
+
+def handle_home_collision():
+    global time_at_home_stand, player_in_contact_with_home_stand
+    if game_state_manager.sabotage_in_progress:
+        if player_rect.colliderect(home_stand_rect):
+            home_base.set_home_stand_image(True)
+            player_in_contact_with_home_stand = True
+            if time_at_home_stand is None:
+                time_at_home_stand = time.time()
+                player_cup.start()
+            elapsed_time = time.time() - time_at_home_stand
+            if elapsed_time >= cup_fill_speed:
+                message_box.add_message("You've got the foul-smelling lemonade. Go sabotage the enemy stand!")
+                time_at_home_stand = None
+                game_state_manager.got_pee = True
+                player_in_contact_with_home_stand = False
+        elif player_rect.colliderect(second_home_stand_rect):  # Check collision with second home stand
+            second_home_stand.set_home_stand_image(True)
+            player_in_contact_with_home_stand = True
+            if time_at_home_stand is None:
+                time_at_home_stand = time.time()
+                player_cup.start()
+            elapsed_time = time.time() - time_at_home_stand
+            if elapsed_time >= cup_fill_speed:
+                message_box.add_message("You've got the foul-smelling lemonade. Go sabotage the enemy stand!")
+                time_at_home_stand = None
+                game_state_manager.got_pee = True
+                player_in_contact_with_home_stand = False
+        else:
+            home_base.set_home_stand_image(False)
+            second_home_stand.set_home_stand_image(False)  # Reset image for second home stand
+            if not player_cup.full:
+                time_at_home_stand = None
+                player_cup.reset()
+                player_in_contact_with_home_stand = False
+
+
+def get_click_coordinates():
+    mouse_pos = pygame.mouse.get_pos()
+    world_pos = (mouse_pos[0] + camera_offset[0], mouse_pos[1] + camera_offset[1])
+    print(f"Clicked at world coordinates: {world_pos}")
+
+
+def draw_border(surface, camera_offset):
+    points = [
+        (0 - camera_offset[0], 0 - camera_offset[1]),
+        (MAP_WIDTH - camera_offset[0], 0 - camera_offset[1]),
+        (MAP_WIDTH - camera_offset[0], MAP_HEIGHT - camera_offset[1]),
+        (0 - camera_offset[0], MAP_HEIGHT - camera_offset[1]),
+        (0 - camera_offset[0], 0 - camera_offset[1])
     ]
-
-    # Camera offset
-    camera_offset = [0, 0]
-
-    # Initialize home stand checks
-    last_update_time = pygame.time.get_ticks()
-    last_speed_increase_time = pygame.time.get_ticks()
-    home_encounter_triggered = False
-    time_at_home_stand = None
-    player_in_contact_with_home_stand = False
-    time_at_enemy_home_stand = None
-    # enemy_in_contact_with_home_stand = False
-
-    # Generate paths
-    paths = Path.generate_paths(opp_stand_positions)
-
-    # Generate customers
-    customers = []
-    for stand in opp_stand_positions:
-        for _ in range(50 // len(opp_stand_positions)):  # Distribute 50 customers among stands
-            x = random.randint(stand.position[0] - 200, stand.position[0] + 200)
-            y = random.randint(stand.position[1] - 200, stand.position[1] + 200)
-            customers.append(Customer(x, y, 50, 1, stand, opp_stand_positions))
-
-    # Set initial target for enemy
-    enemy.set_target(opp_stands + [cg for cg in opp_stands if isinstance(cg, CookieGirl)] + [hb for hb in opp_stands if isinstance(hb, HirableBully)])
-
-    def handle_home_collision():
-        global time_at_home_stand, player_in_contact_with_home_stand
-        if game_state_manager.sabotage_in_progress:
-            if player_rect.colliderect(home_stand_rect):
-                home_base.set_home_stand_image(True)
-                player_in_contact_with_home_stand = True
-                if time_at_home_stand is None:
-                    time_at_home_stand = time.time()
-                    player_cup.start()
-                elapsed_time = time.time() - time_at_home_stand
-                if elapsed_time >= cup_fill_speed:
-                    message_box.add_message("You've got the foul-smelling lemonade. Go sabotage the enemy stand!")
-                    time_at_home_stand = None
-                    game_state_manager.got_pee = True
-                    player_in_contact_with_home_stand = False
-            elif player_rect.colliderect(second_home_stand_rect):  # Check collision with second home stand
-                second_home_stand.set_home_stand_image(True)
-                player_in_contact_with_home_stand = True
-                if time_at_home_stand is None:
-                    time_at_home_stand = time.time()
-                    player_cup.start()
-                elapsed_time = time.time() - time_at_home_stand
-                if elapsed_time >= cup_fill_speed:
-                    message_box.add_message("You've got the foul-smelling lemonade. Go sabotage the enemy stand!")
-                    time_at_home_stand = None
-                    game_state_manager.got_pee = True
-                    player_in_contact_with_home_stand = False
-            else:
-                home_base.set_home_stand_image(False)
-                second_home_stand.set_home_stand_image(False)  # Reset image for second home stand
-                if not player_cup.full:
-                    time_at_home_stand = None
-                    player_cup.reset()
-                    player_in_contact_with_home_stand = False
+    pygame.draw.lines(surface, BRIGHT_GREEN, False, points, 5)
 
 
-    def get_click_coordinates():
-        mouse_pos = pygame.mouse.get_pos()
-        world_pos = (mouse_pos[0] + camera_offset[0], mouse_pos[1] + camera_offset[1])
-        print(f"Clicked at world coordinates: {world_pos}")
+def draw_background(surface, camera_offset, tile_image):
+    tile_width = tile_image.get_width()
+    tile_height = tile_image.get_height()
+    start_x = max(int((camera_offset[0] - 1000) // tile_width), 0)
+    end_x = min(int((camera_offset[0] + WIDTH + 1000) // tile_width) + 1, int((MAP_WIDTH + 2000) // tile_width))
+    start_y = max(int((camera_offset[1] - 1000) // tile_height), 0)
+    end_y = min(int((camera_offset[1] + HEIGHT + 1000) // tile_height) + 1, int((MAP_HEIGHT + 2000) // tile_height))
+    for x in range(start_x, end_x):
+        for y in range(start_y, end_y):
+            surface.blit(tile_image, (x * tile_width - camera_offset[0], y * tile_height - camera_offset[1]))
 
 
-    def draw_border(surface, camera_offset):
-        points = [
-            (0 - camera_offset[0], 0 - camera_offset[1]),
-            (MAP_WIDTH - camera_offset[0], 0 - camera_offset[1]),
-            (MAP_WIDTH - camera_offset[0], MAP_HEIGHT - camera_offset[1]),
-            (0 - camera_offset[0], MAP_HEIGHT - camera_offset[1]),
-            (0 - camera_offset[0], 0 - camera_offset[1])
-        ]
-        pygame.draw.lines(surface, BRIGHT_GREEN, False, points, 5)
+def check_collision_with_customers(player_rect, customers, camera_offset):
+    collision_detected = False
+    for customer in customers:
+        customer_rect = pygame.Rect(customer.position[0] - camera_offset[0], customer.position[1] - camera_offset[1], customer.size, customer.size)
+        if player_rect.colliderect(customer_rect):
+            collision_detected = True
+    return collision_detected
 
 
-    def draw_background(surface, camera_offset, tile_image):
-        tile_width = tile_image.get_width()
-        tile_height = tile_image.get_height()
-        start_x = max(int((camera_offset[0] - 1000) // tile_width), 0)
-        end_x = min(int((camera_offset[0] + WIDTH + 1000) // tile_width) + 1, int((MAP_WIDTH + 2000) // tile_width))
-        start_y = max(int((camera_offset[1] - 1000) // tile_height), 0)
-        end_y = min(int((camera_offset[1] + HEIGHT + 1000) // tile_height) + 1, int((MAP_HEIGHT + 2000) // tile_height))
-        for x in range(start_x, end_x):
-            for y in range(start_y, end_y):
-                surface.blit(tile_image, (x * tile_width - camera_offset[0], y * tile_height - camera_offset[1]))
+# Display title screen
+title_screen = TitleScreen(screen, font, WIDTH, HEIGHT, instruction_screen)
+title_screen.draw()
 
+async def main_loop():
 
-    def check_collision_with_customers(player_rect, customers, camera_offset):
-        collision_detected = False
-        for customer in customers:
-            customer_rect = pygame.Rect(customer.position[0] - camera_offset[0], customer.position[1] - camera_offset[1], customer.size, customer.size)
-            if player_rect.colliderect(customer_rect):
-                collision_detected = True
-        return collision_detected
-
-
-    # Display title screen
-    title_screen = TitleScreen(screen, font, WIDTH, HEIGHT, instruction_screen)
-    title_screen.draw()
-
-
+    global player_rect, home_stand_rect, second_home_stand_rect, time_at_home_stand, camera_offset
     running = True
 
     while running:
@@ -334,7 +336,7 @@ async def main_loop():
                 print("Game Over")
                 running = False
                 game_over_screen = GameOverScreen(screen, font, score_manager.player_score, score_manager.opponent_score, WIDTH, HEIGHT, title_screen)
-                game_over_screen.show()
+                await game_over_screen.show()
 
         # Draw dialogue
         dialogue_manager.draw_dialogue(screen, camera_offset, player.position, npc_text_color=(255, 255, 255), npc_visible_duration=2)
@@ -350,9 +352,11 @@ async def main_loop():
         fps_text = fps_font.render(f'FPS: {int(fps)}', True, (255, 255, 255))
         screen.blit(fps_text, (10, HEIGHT - 40))
 
+        clock.tick(60)
         pygame.display.flip()
-        clock.tick(FPS)
+        await asyncio.sleep(0)
 
     pygame.quit()
 
-asyncio.run(main_loop())
+if __name__ == '__main__':
+    asyncio.run(main_loop())

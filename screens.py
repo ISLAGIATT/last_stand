@@ -135,7 +135,7 @@ class TitleScreen:
         self.title_text = self.title_font.render('The Last Stand', True, (255, 255, 255))
         # self.start_text = self.subtitle_font.render('Press any key to start', True, (255, 255, 255))
         self.instruction_text = font.render('Instructions', True, (255, 255, 255))
-        self.title_music = 'audio/title_track.ogg'  # Path to your title music file
+        self.title_music = 'music/title_track.ogg'  # Path to your title music file
         pygame.mixer.init()
         pygame.mixer.music.load(self.title_music)
         pygame.mixer.music.play(-1)  # Loop the music
