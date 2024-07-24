@@ -1,6 +1,9 @@
+import asyncio
 import pygame
 import time
 import sys
+
+import gc
 
 def render_text_wrapped(text, font, max_width):
     words = text.split(' ')
@@ -106,7 +109,7 @@ class InstructionScreen:
 
         pygame.display.flip()
 
-    def show(self):
+    async def show(self):
         self.running = True
         while self.running:
             for event in pygame.event.get():
@@ -116,7 +119,7 @@ class InstructionScreen:
                     exit()
                 elif event.type == pygame.KEYDOWN:
                     self.running = False  # Exit to title screen
-
+            await asyncio.sleep(0)
             self.draw()
 
 class TitleScreen:
@@ -164,9 +167,11 @@ class TitleScreen:
     def stop_music(self):
         pygame.mixer.music.fadeout(1000)  # Fade out music over 1 second
 
-    def show(self):
+    async def show(self):
+        FPS =60
         waiting_for_start = True
         while waiting_for_start:
+            self.draw()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -181,7 +186,7 @@ class TitleScreen:
                             waiting_for_start = False
                         elif self.current_option == 1:
                             self.stop_music()
-                            self.instruction_screen.show()
+                            await self.instruction_screen.show()
                             pygame.mixer.music.play(-1)  # Restart the title music
                             self.draw()  # Redraw title screen after returning from instructions
                     elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -192,6 +197,8 @@ class TitleScreen:
                             self.instruction_screen.show()
                             pygame.mixer.music.play(-1)  # Restart the title music
                             self.draw()  # Redraw title screen after returning from instructions
+
+                await asyncio.sleep(0)
 
             self.draw()
 
@@ -255,7 +262,7 @@ class GameOverScreen:
         text_rect = text_surface.get_rect(center=(x, y))
         self.screen.blit(text_surface, text_rect.topleft)
 
-    def show(self):
+    async def show(self):
         self.running = True
         while self.running:
             for event in pygame.event.get():
@@ -264,7 +271,9 @@ class GameOverScreen:
                     exit()
                 elif event.type == pygame.KEYDOWN:
                     self.running = False
-                    self.title_screen.show()
+                    await self.title_screen.show()
+
+            await asyncio.sleep(0)
 
             self.draw()
             pygame.display.flip()
