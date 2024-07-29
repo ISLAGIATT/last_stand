@@ -13,6 +13,7 @@ class CountdownCup:
         self.active = False
         self.full = False
         self.particles = []
+        self.fill_speed = 3
 
     def start(self):
         if not self.active and not self.full:

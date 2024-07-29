@@ -1,9 +1,7 @@
-import asyncio
 import pygame
+import asyncio
 import time
 import sys
-
-import gc
 
 def render_text_wrapped(text, font, max_width):
     words = text.split(' ')
@@ -31,14 +29,14 @@ class InstructionScreen:
         self.instruction_font = pygame.font.SysFont("Courier", 22, bold=True)
 
         # Load animations or images for each character and resize to 75px
-        self.bully_images = [pygame.transform.scale(pygame.image.load(f'anim/bully/bully{i}.png').convert_alpha(), (50, 50)) for i in range(1, 6)]
-        self.cookie_girl_images = [pygame.transform.scale(pygame.image.load(f'anim/cookie_girl/cookie_girl{i}.png').convert_alpha(), (75, 75)) for i in range(1, 5)]
-        self.cop_images = [pygame.transform.scale(pygame.image.load(f'anim/cop/cop_down{i}.png').convert_alpha(), (50, 50)) for i in range(1, 7)]
-        self.player_images = [pygame.transform.scale(pygame.image.load(f'anim/player/player_idle{i}.png').convert_alpha(), (50, 50)) for i in range(1, 7)]
-        self.enemy_images = [pygame.transform.scale(pygame.image.load(f'anim/enemy/enemy_idle{i}.png').convert_alpha(), (50, 50)) for i in range(1, 7)]
-        self.customer_images = [pygame.transform.scale(pygame.image.load(f'anim/customer/customer_walk_down{i}.png').convert_alpha(), (50, 50)) for i in range(1, 7)]
-        self.outhouse_image = pygame.transform.scale(pygame.image.load('images/home_base.png').convert_alpha(), (75, 75))
-        self.stand_image = pygame.transform.scale(pygame.image.load('images/stand_200px.png').convert_alpha(), (75, 75))
+        self.bully_images = [pygame.transform.scale(pygame.image.load(f'data/anim/bully/bully{i}.png').convert_alpha(), (50, 50)) for i in range(1, 6)]
+        self.cookie_girl_images = [pygame.transform.scale(pygame.image.load(f'data/anim/cookie_girl/cookie_girl{i}.png').convert_alpha(), (75, 75)) for i in range(1, 5)]
+        self.cop_images = [pygame.transform.scale(pygame.image.load(f'data/anim/cop/cop_down{i}.png').convert_alpha(), (50, 50)) for i in range(1, 7)]
+        self.player_images = [pygame.transform.scale(pygame.image.load(f'data/anim/player/player_idle{i}.png').convert_alpha(), (50, 50)) for i in range(1, 7)]
+        self.enemy_images = [pygame.transform.scale(pygame.image.load(f'data/anim/enemy/enemy_idle{i}.png').convert_alpha(), (50, 50)) for i in range(1, 7)]
+        self.customer_images = [pygame.transform.scale(pygame.image.load(f'data/anim/customer/customer_walk_down{i}.png').convert_alpha(), (50, 50)) for i in range(1, 7)]
+        self.outhouse_image = pygame.transform.scale(pygame.image.load('data/images/home_base.png').convert_alpha(), (75, 75))
+        self.stand_image = pygame.transform.scale(pygame.image.load('data/images/stand_200px.png').convert_alpha(), (75, 75))
 
         self.frame_index = 0
         self.animation_speed = 0.01
@@ -109,7 +107,7 @@ class InstructionScreen:
 
         pygame.display.flip()
 
-    async def show(self):
+    def show(self):
         self.running = True
         while self.running:
             for event in pygame.event.get():
@@ -119,7 +117,7 @@ class InstructionScreen:
                     exit()
                 elif event.type == pygame.KEYDOWN:
                     self.running = False  # Exit to title screen
-            await asyncio.sleep(0)
+
             self.draw()
 
 class TitleScreen:
@@ -131,14 +129,13 @@ class TitleScreen:
         self.padding = 10
         self.title_font = pygame.font.SysFont("Courier", 42, bold=True)
         self.subtitle_font = pygame.font.SysFont("Courier", 36)
-        self.title_image = pygame.image.load('images/title.png').convert_alpha()  # Path to your title image
+        self.title_image = pygame.image.load('data/images/title.png').convert_alpha()  # Path to your title image
         title_image_width = width - 2 * self.padding
         title_image_height = (height * 2 // 3) - self.padding
         self.title_image = pygame.transform.scale(self.title_image, (title_image_width, title_image_height))
         self.title_text = self.title_font.render('The Last Stand', True, (255, 255, 255))
-        # self.start_text = self.subtitle_font.render('Press any key to start', True, (255, 255, 255))
         self.instruction_text = font.render('Instructions', True, (255, 255, 255))
-        self.title_music = 'music/title_track.ogg'  # Path to your title music file
+        self.title_music = 'data/music/title_track.ogg'  # Path to your title music file
         pygame.mixer.init()
         pygame.mixer.music.load(self.title_music)
         pygame.mixer.music.play(-1)  # Loop the music
@@ -154,7 +151,6 @@ class TitleScreen:
         self.screen.fill((0, 0, 0))
         self.screen.blit(self.title_image, (self.padding, self.padding))
         self.screen.blit(self.title_text, (self.width // 2 - self.title_text.get_width() // 2, self.height * 2 // 3 + 40))
-        # self.screen.blit(self.start_text, (self.width // 2 - self.start_text.get_width() // 2, self.height * 2 // 3 + 100))
 
         for i, (text, option_surface) in enumerate(self.options):
             color = (255, 255, 0) if i == self.current_option else (255, 255, 255)
@@ -162,13 +158,12 @@ class TitleScreen:
             self.screen.blit(option_surface,
                              (self.width // 2 - option_surface.get_width() // 2, self.height * 2 // 3 + 100 + i * 40))
         pygame.display.flip()
-        pygame.display.flip()
 
     def stop_music(self):
         pygame.mixer.music.fadeout(1000)  # Fade out music over 1 second
 
     async def show(self):
-        FPS =60
+        FPS = 60
         waiting_for_start = True
         while waiting_for_start:
             self.draw()
@@ -186,7 +181,7 @@ class TitleScreen:
                             waiting_for_start = False
                         elif self.current_option == 1:
                             self.stop_music()
-                            await self.instruction_screen.show()
+                            self.instruction_screen.show()
                             pygame.mixer.music.play(-1)  # Restart the title music
                             self.draw()  # Redraw title screen after returning from instructions
                     elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -198,10 +193,8 @@ class TitleScreen:
                             pygame.mixer.music.play(-1)  # Restart the title music
                             self.draw()  # Redraw title screen after returning from instructions
 
-                await asyncio.sleep(0)
-
+            await asyncio.sleep(0)
             self.draw()
-
 
 class GameOverScreen:
     def __init__(self, screen, font, player_score, opponent_score, width, height, title_screen):
@@ -213,7 +206,7 @@ class GameOverScreen:
         self.width = width
         self.height = height
         self.padding = 10
-        self.game_over_image = pygame.image.load('images/game_over.png').convert_alpha()
+        self.game_over_image = pygame.image.load('data/images/game_over.png').convert_alpha()
         game_over_image_width = width - 2 * self.padding
         game_over_image_height = (height * 2 // 3) - self.padding
         self.game_over_image = pygame.transform.scale(self.game_over_image, (game_over_image_width, game_over_image_height))
@@ -264,6 +257,7 @@ class GameOverScreen:
 
     async def show(self):
         self.running = True
+        pygame.event.clear()  # Clear event queue to avoid unintended behavior
         while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -271,10 +265,10 @@ class GameOverScreen:
                     exit()
                 elif event.type == pygame.KEYDOWN:
                     self.running = False
-                    await self.title_screen.show()
+                    await self.title_screen.show()  # Go back to title screen
 
             await asyncio.sleep(0)
-
             self.draw()
             pygame.display.flip()
             pygame.time.Clock().tick(60)
+

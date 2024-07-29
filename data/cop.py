@@ -16,10 +16,10 @@ class Cop:
 
         # Load animation frames and scale them to the desired size
         self.animations = {
-            'down': [self.load_image(f'anim/cop/cop_down{i}.png') for i in range(1, 9)],
-            'up': [self.load_image(f'anim/cop/cop_up{i}.png') for i in range(1, 9)],
-            'right': [self.load_image(f'anim/cop/cop_side{i}.png') for i in range(1, 9)],
-            'left': [pygame.transform.flip(self.load_image(f'anim/cop/cop_side{i}.png'), True, False) for i in range(1, 9)]
+            'down': [self.load_image(f'data/anim/cop/cop_down{i}.png') for i in range(1, 9)],
+            'up': [self.load_image(f'data/anim/cop/cop_up{i}.png') for i in range(1, 9)],
+            'right': [self.load_image(f'data/anim/cop/cop_side{i}.png') for i in range(1, 9)],
+            'left': [pygame.transform.flip(self.load_image(f'data/anim/cop/cop_side{i}.png'), True, False) for i in range(1, 9)]
         }
         self.image = self.animations['down'][0]  # Default frame
 

@@ -2,7 +2,7 @@ import pygame
 import pygame.gfxdraw
 import time
 
-from stand import HirableBully, CookieGirl
+from data.stand import HirableBully, CookieGirl
 
 def draw_rounded_rect(surface, rect, color, radius, alpha=150):
     rect = pygame.Rect(rect)

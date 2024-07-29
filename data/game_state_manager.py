@@ -1,4 +1,4 @@
-from stand import HirableBully
+from data.stand import HirableBully
 
 class GameStateManager:
     def __init__(self):
@@ -12,6 +12,7 @@ class GameStateManager:
         self.enemy_movement_delay = 0  # Added variable to track enemy movement delay
         self.encounter_triggered_by_player = False  # Flag to track if the encounter was triggered by the player
         self.encounter_triggered_by_enemy = False  # Added flag to track if the encounter was triggered by the enemy
+        self.is_game_over = False
 
     def start_sabotage(self, stand):
         self.sabotage_in_progress = True

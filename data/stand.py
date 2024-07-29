@@ -2,9 +2,9 @@ import random
 import time
 import pygame
 
-from message_box import MessageBox
-from player import Player
-from running_person import RunningPerson
+from data.message_box import MessageBox
+from data.player import Player
+from data.running_person import RunningPerson
 
 
 def blink_color(color, start_time):
@@ -18,17 +18,17 @@ def blink_color(color, start_time):
 class Stand:
     next_id = 1  # Class-level attribute to keep track of the next ID to assign
 
-    def __init__(self, x, y, size, color, image_path="images/stand_200px.png"):
+    def __init__(self, x, y, size, color, image_path="data/images/stand_200px.png"):
         self.id = Stand.next_id
         Stand.next_id += 1
         self.position = [x, y]
         self.size = size
         self.color = color
         self.image_path = image_path
-        self.player_image_path = "images/stand_player.png"
-        self.enemy_image_path = "images/stand_enemy.png"
-        self.contact_image_path = "images/home_base_occupied.png"
-        self.inactive_image_path = 'images/stand_inactive.png'
+        self.player_image_path = "data/images/stand_player.png"
+        self.enemy_image_path = "data/images/stand_enemy.png"
+        self.contact_image_path = "data/images/home_base_occupied.png"
+        self.inactive_image_path = 'data/images/stand_inactive.png'
 
         self.image = pygame.image.load(image_path) if image_path else None
 
@@ -438,7 +438,7 @@ class CookieGirl(Stand):
 
         # Load animation frames and scale them to the desired size
         self.animations = [
-            pygame.transform.scale(pygame.image.load(f'anim/cookie_girl/cookie_girl{i}.png').convert_alpha(),
+            pygame.transform.scale(pygame.image.load(f'data/anim/cookie_girl/cookie_girl{i}.png').convert_alpha(),
                                    (self.size, self.size)) for i in range(1, 5)]
         self.image = self.animations[0]  # Default frame
 
@@ -529,7 +529,7 @@ class HirableBully(Stand):
         self.animation_speed = 0.10
         self.frame_timer = 0
         self.hired = False
-        self.animations = [pygame.transform.scale(pygame.image.load(f'anim/bully/bully{i}.png').convert_alpha(), (self.size, self.size)) for i in range(1, 6)]
+        self.animations = [pygame.transform.scale(pygame.image.load(f'data/anim/bully/bully{i}.png').convert_alpha(), (self.size, self.size)) for i in range(1, 6)]
         self.image = self.animations[0]  # Default frame
 
     def apply_effect(self, player, game_state_manager):

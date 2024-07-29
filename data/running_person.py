@@ -15,10 +15,10 @@ class RunningPerson:
         # Define the animations dictionary here
         self.animations = {
             'right': [
-                pygame.transform.scale(pygame.image.load(f'anim/running_kid/running_kid_side{i}.png').convert_alpha(),
+                pygame.transform.scale(pygame.image.load(f'data/anim/running_kid/running_kid_side{i}.png').convert_alpha(),
                                        (self.size, self.size)) for i in range(1, 7)],
             'left': [pygame.transform.flip(
-                pygame.transform.scale(pygame.image.load(f'anim/running_kid/running_kid_side{i}.png').convert_alpha(),
+                pygame.transform.scale(pygame.image.load(f'data/anim/running_kid/running_kid_side{i}.png').convert_alpha(),
                                        (self.size, self.size)), True, False) for i in range(1, 7)]
         }
 

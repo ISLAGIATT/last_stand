@@ -17,10 +17,10 @@ class Customer:
 
         # Load animation frames and scale them to the desired size
         self.animations = {
-            'down': [self.load_image(f'anim/customer/customer_walk_down{i}.png') for i in range(1, 9)],
-            'up': [self.load_image(f'anim/customer/customer_walk_up{i}.png') for i in range(1, 9)],
-            'left': [self.load_image(f'anim/customer/customer_walk_left{i}.png') for i in range(1, 9)],
-            'right': [self.load_image(f'anim/customer/customer_walk_right{i}.png') for i in range(1, 9)]
+            'down': [self.load_image(f'data/anim/customer/customer_walk_down{i}.png') for i in range(1, 9)],
+            'up': [self.load_image(f'data/anim/customer/customer_walk_up{i}.png') for i in range(1, 9)],
+            'left': [self.load_image(f'data/anim/customer/customer_walk_left{i}.png') for i in range(1, 9)],
+            'right': [self.load_image(f'data/anim/customer/customer_walk_right{i}.png') for i in range(1, 9)]
         }
         self.image = self.animations['down'][0]  # Default frame
 

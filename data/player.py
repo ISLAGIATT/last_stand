@@ -21,28 +21,28 @@ class Player:
 
         self.animations = {
             'walk_right': [
-                pygame.transform.scale(pygame.image.load(f'anim/player/player_walk_side{i}.png').convert_alpha(),
+                pygame.transform.scale(pygame.image.load(f'data/anim/player/player_walk_side{i}.png').convert_alpha(),
                                        (self.size, self.size)) for i in range(1, 7)],
             'walk_up': [
-                pygame.transform.scale(pygame.image.load(f'anim/player/player_walk_up{i}.png').convert_alpha(),
+                pygame.transform.scale(pygame.image.load(f'data/anim/player/player_walk_up{i}.png').convert_alpha(),
                                        (self.size, self.size)) for i in range(1, 7)],
             'walk_down': [
-                pygame.transform.scale(pygame.image.load(f'anim/player/player_walk{i}.png').convert_alpha(),
+                pygame.transform.scale(pygame.image.load(f'data/anim/player/player_walk{i}.png').convert_alpha(),
                                        (self.size, self.size)) for i in range(1, 7)],
             'walk_left': [pygame.transform.flip(
-                pygame.transform.scale(pygame.image.load(f'anim/player/player_walk_side{i}.png').convert_alpha(),
+                pygame.transform.scale(pygame.image.load(f'data/anim/player/player_walk_side{i}.png').convert_alpha(),
                                        (self.size, self.size)), True, False) for i in range(1, 7)],
             'idle_right': [
-                pygame.transform.scale(pygame.image.load(f'anim/player/player_idle_side{i}.png').convert_alpha(),
+                pygame.transform.scale(pygame.image.load(f'data/anim/player/player_idle_side{i}.png').convert_alpha(),
                                        (self.size, self.size)) for i in range(1, 7)],
             'idle_up': [
-                pygame.transform.scale(pygame.image.load(f'anim/player/player_idle_up{i}.png').convert_alpha(),
+                pygame.transform.scale(pygame.image.load(f'data/anim/player/player_idle_up{i}.png').convert_alpha(),
                                        (self.size, self.size)) for i in range(1, 7)],
             'idle_down': [
-                pygame.transform.scale(pygame.image.load(f'anim/player/player_idle{i}.png').convert_alpha(),
+                pygame.transform.scale(pygame.image.load(f'data/anim/player/player_idle{i}.png').convert_alpha(),
                                        (self.size, self.size)) for i in range(1, 7)],
             'idle_left': [pygame.transform.flip(
-                pygame.transform.scale(pygame.image.load(f'anim/player/player_idle_side{i}.png').convert_alpha(),
+                pygame.transform.scale(pygame.image.load(f'data/anim/player/player_idle_side{i}.png').convert_alpha(),
                                        (self.size, self.size)), True, False) for i in range(1, 7)]
         }
         self.image = self.animations['idle_right'][0]  # Default frame
