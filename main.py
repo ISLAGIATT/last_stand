@@ -79,13 +79,13 @@ async def main_loop():
         home_stand = Stand(WIDTH // 2, HEIGHT // 2, 75, (0, 255, 0), 'data/images/stand_empty.png')
         second_home_stand = Stand(2000, 1500, 100, (0, 255, 0), 'data/images/home_base.png')
         player_cup = CountdownCup(home_base.position[0] - 50, home_base.position[1], 30, 100, 3)
-        score_manager = ScoreManager(player, enemy, font, stands_font, 1 * 60 * 1000, player_cup)
+        score_manager = ScoreManager(player, enemy, font, stands_font, 1 * 90 * 1000, player_cup)
         cop = Cop(MAP_WIDTH, MAP_HEIGHT, size=60, speed=3)
 
         # Timer variables
         start_time = pygame.time.get_ticks()
-        time_limit = 1 * 60 * 1000  # 2 minutes in milliseconds
-        #time_limit = 1000  # for testing gameover screen
+        time_limit = 1 * 90 * 1000  # 2 minutes in milliseconds
+
 
         # Generate stands and customers
         player_start_pos = (WIDTH // 2, HEIGHT // 2)
